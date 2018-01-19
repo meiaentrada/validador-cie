@@ -10,8 +10,7 @@ Build #AI-171.4443003, built on November 9, 2017
 JRE: 1.8.0_152-release-915-b08 x86_64
 JVM: OpenJDK 64-Bit Server VM by JetBrains s.r.o
 
-
- */
+*/
 
 package br.org.meiaentrada.validadorcie;
 
@@ -117,9 +116,10 @@ import android.util.DisplayMetrics;
 
 import java.io.UnsupportedEncodingException;
 
+import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
+
 
 public class MainActivity extends AppCompatActivity {
-
 
     BarcodeDetector barcodeDetector;
     String evento_cfg;
@@ -148,18 +148,6 @@ public class MainActivity extends AppCompatActivity {
     String latitude;
     String longitude;
     String android_id;
-
-
-    public static final String URL_FOTOS = "https://s3-sa-east-1.amazonaws.com/meiaentrada-publico-prod/";
-    public static final String URL_CAPTURAS = "https://klkst1hbza.execute-api.sa-east-1.amazonaws.com/validador_api_4";
-    public static final String URL_CHAVES = "https://prod.meiaentrada.org.br/public/downloads/crl";
-    public static final String URL_CPF = "https://r4yl4or3t4.execute-api.sa-east-1.amazonaws.com/validador_api_8/";
-
-    public static final String ERRO_INVALIDO = "\n     Documento inválido     \n";
-    public static final String ERRO_EXPIRADO = "\n     Documento expirado     \n";
-    public static final String ERRO_REVOGADO = "\n     Documento revogado     \n";
-    public static final String DOC_VALIDO = "\n     Documento válido     \n";
-
 
     @Override
     public void onCreate(Bundle state) {
@@ -321,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
 
                                         if (verifica_sinal_dados()) {
 
-                                            String urlimagem = URL_FOTOS + MD5(docum) + "/image.jpg";
+                                            String urlimagem = GlobalConstants.URL_FOTOS + MD5(docum) + "/image.jpg";
                                             downloadImagem(urlimagem);
                                             //dialogo_aviso(MD5(docum));
 
@@ -822,7 +810,7 @@ public class MainActivity extends AppCompatActivity {
 
 
             RequestQueue queue = Volley.newRequestQueue(this);
-            StringRequest postRequest = new StringRequest(Request.Method.GET, URL_CPF,
+            StringRequest postRequest = new StringRequest(Request.Method.GET, GlobalConstants.URL_CPF,
                     new Response.Listener<String>() {
 
 
@@ -841,7 +829,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     barcodeValue.setTextColor(Color.rgb(0, 255, 0));
                                     downloadImagem(obj.getString("foto"));
-                                    barcodeValue.setText(DOC_VALIDO);
+                                    barcodeValue.setText(GlobalConstants.DOC_VALIDO);
 
                                 } else {
 
@@ -920,7 +908,7 @@ public class MainActivity extends AppCompatActivity {
                 params.put("idDispositivo", proxi.idDispositivo);
                 params.put("codigoAcesso", codigo_cfg);
 
-                JsonObjectRequest postRequest = new JsonObjectRequest(URL_CAPTURAS, new JSONObject(params),
+                JsonObjectRequest postRequest = new JsonObjectRequest(GlobalConstants.URL_CAPTURAS, new JSONObject(params),
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {
@@ -970,7 +958,7 @@ public class MainActivity extends AppCompatActivity {
     public void pega_chaves_nv() {
 
         RequestQueue queue = Volley.newRequestQueue(this);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, URL_CHAVES,
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, GlobalConstants.URL_CHAVES,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -1027,7 +1015,7 @@ public class MainActivity extends AppCompatActivity {
     retornoValidacao pega_emissor(String certDNE) {
 
         retornoValidacao retornove = new retornoValidacao();
-        retornove.resultado = ERRO_INVALIDO;
+        retornove.resultado = GlobalConstants.ERRO_INVALIDO;
         retornove.erro = true;
 
 
@@ -1060,7 +1048,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         retornoValidacao retornov = new retornoValidacao();
-        retornov.resultado = ERRO_INVALIDO;
+        retornov.resultado = GlobalConstants.ERRO_INVALIDO;
         retornov.erro = true;
 
         try {
@@ -1092,18 +1080,18 @@ public class MainActivity extends AppCompatActivity {
                             Attribute[] attribs = attr2.getAttributes();
                             Attribute a = attribs[0];
                             String apar = a.getAttrValues() + "";
-                            retornov.resultado = retornov.resultado.concat("CPF: " + apar.substring(9, 20) + DOC_VALIDO);
+                            retornov.resultado = retornov.resultado.concat("CPF: " + apar.substring(9, 20) + GlobalConstants.DOC_VALIDO);
                             JcaX509CRLConverter converter = new JcaX509CRLConverter();
                             converter.setProvider("BC");
                             X509CRL crlconv = converter.getCRL(jceCRL);
                             X509CRLEntry xentry = crlconv.getRevokedCertificate(attr2.getSerialNumber());
                             if (xentry != null) {
-                                retornov.resultado = ERRO_REVOGADO;
+                                retornov.resultado = GlobalConstants.ERRO_REVOGADO;
                                 retornov.erro = true;
                             }
 
                         } else {
-                            retornov.resultado = ERRO_EXPIRADO;
+                            retornov.resultado = GlobalConstants.ERRO_EXPIRADO;
                             retornov.erro = true;
                         }
                     }
