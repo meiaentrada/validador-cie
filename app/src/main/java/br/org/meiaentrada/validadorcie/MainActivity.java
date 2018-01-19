@@ -105,8 +105,6 @@ import android.location.Location;
 import android.provider.Settings.Secure;
 import android.text.InputType;
 
-import java.util.InputMismatchException;
-
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.MemoryPolicy;
 import com.squareup.picasso.NetworkPolicy;
@@ -117,6 +115,10 @@ import android.util.DisplayMetrics;
 import java.io.UnsupportedEncodingException;
 
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
+import br.org.meiaentrada.validadorcie.entity.ItemCaptura;
+import br.org.meiaentrada.validadorcie.service.ToastService;
+import br.org.meiaentrada.validadorcie.util.CpfUtil;
+import br.org.meiaentrada.validadorcie.util.HashUtil;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -147,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
     Criteria criteria;
     String latitude;
     String longitude;
-    String android_id;
+    String androidId;
 
     @Override
     public void onCreate(Bundle state) {
@@ -173,8 +175,7 @@ public class MainActivity extends AppCompatActivity {
         evento = findViewById(R.id.evento);
         evento.setText(evento_cfg);
         layout1 = findViewById(R.id.layout1);
-        android_id = Secure.ANDROID_ID;
-
+        androidId = Secure.ANDROID_ID;
 
         if (checkAndRequestPermissions()) {
 
@@ -183,7 +184,6 @@ public class MainActivity extends AppCompatActivity {
             criteria.setAccuracy(Criteria.ACCURACY_COARSE);
             criteria.setCostAllowed(false);
             provider = locationManager.getBestProvider(criteria, false);
-
 
             int rcl = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION);
             if (rcl == PackageManager.PERMISSION_GRANTED) {
@@ -210,14 +210,12 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void surfaceCreated(SurfaceHolder holder) {
 
-
                     try {
 
                         int rc = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA);
                         if (rc == PackageManager.PERMISSION_GRANTED) {
                             cameraSource.start(cameraView.getHolder());
                         }
-
 
                     } catch (IOException ex) {
 
@@ -236,11 +234,11 @@ public class MainActivity extends AppCompatActivity {
                     cameraSource.stop();
                 }
 
-
             });
 
             // detecta o QR code
             barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
+
                 @Override
                 public void release() {
                 }
@@ -252,7 +250,6 @@ public class MainActivity extends AppCompatActivity {
                         barcodeValue.post(new Runnable() {
                             @Override
                             public void run() {
-
 
                                 String docum = barcodes.valueAt(0).displayValue;
 
@@ -271,7 +268,6 @@ public class MainActivity extends AppCompatActivity {
                                 set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
                                 set.applyTo(layout1);
 
-
                                 retornoValidacao emissor = pega_emissor(docum);
 
                                 if (evento_cfg.isEmpty()) {
@@ -279,7 +275,6 @@ public class MainActivity extends AppCompatActivity {
                                 }
 
                                 if (emissor.erro) {
-
 
                                     barcodeValue.setTextColor(Color.rgb(255, 0, 0));
                                     Long tsLong = System.currentTimeMillis() / 1000;
@@ -309,14 +304,13 @@ public class MainActivity extends AppCompatActivity {
 
                                         if (verifica_sinal_dados()) {
 
-                                            String urlimagem = GlobalConstants.URL_FOTOS + MD5(docum) + "/image.jpg";
+                                            String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(docum) + "/image.jpg";
                                             downloadImagem(urlimagem);
                                             //dialogo_aviso(MD5(docum));
 
                                         } else {
                                             prox.setVisibility(View.VISIBLE);
                                         }
-
 
                                     }
 
@@ -327,7 +321,6 @@ public class MainActivity extends AppCompatActivity {
 
                                 }
 
-
                             }
 
 
@@ -337,7 +330,6 @@ public class MainActivity extends AppCompatActivity {
             });
 
         }
-
 
     }
 
@@ -352,7 +344,6 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
 
@@ -360,7 +351,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onProviderEnabled(String provider) {
-
 
         }
 
@@ -379,6 +369,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onResume() {
+
         super.onResume();
         registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
 
@@ -390,9 +381,9 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-
     //checa e solicita permissoes de acesso
     private boolean checkAndRequestPermissions() {
+
         int camera = ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA);
         int intern = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
         int acl = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
@@ -427,7 +418,6 @@ public class MainActivity extends AppCompatActivity {
 
         return true;
 
-
     }
 
     public String UTF(String str) {
@@ -443,18 +433,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return str;
-    }
-
-    private class item_captura {
-
-        private String id;
-        private String certificado;
-        private String resultado;
-        private String horario;
-        private String evento;
-        private String latitude;
-        private String longitude;
-        private String idDispositivo;
 
     }
 
@@ -465,84 +443,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-    public boolean isCPF(String CPF) {
-
-        if (CPF.equals("00000000000") || CPF.equals("11111111111") ||
-                CPF.equals("22222222222") || CPF.equals("33333333333") ||
-                CPF.equals("44444444444") || CPF.equals("55555555555") ||
-                CPF.equals("66666666666") || CPF.equals("77777777777") ||
-                CPF.equals("88888888888") || CPF.equals("99999999999") ||
-                (CPF.length() != 11))
-            return (false);
-
-        char dig10, dig11;
-        int sm, i, r, num, peso;
-
-
-        try {
-
-            sm = 0;
-            peso = 10;
-            for (i = 0; i < 9; i++) {
-
-                num = (CPF.charAt(i) - 48);
-                sm = sm + (num * peso);
-                peso = peso - 1;
-            }
-
-            r = 11 - (sm % 11);
-            if ((r == 10) || (r == 11))
-                dig10 = '0';
-            else dig10 = (char) (r + 48);
-
-
-            sm = 0;
-            peso = 11;
-            for (i = 0; i < 10; i++) {
-                num = (CPF.charAt(i) - 48);
-                sm = sm + (num * peso);
-                peso = peso - 1;
-            }
-
-            r = 11 - (sm % 11);
-            if ((r == 10) || (r == 11))
-                dig11 = '0';
-            else dig11 = (char) (r + 48);
-
-
-            return ((dig10 == CPF.charAt(9)) && (dig11 == CPF.charAt(10)));
-
-
-        } catch (InputMismatchException erro) {
-            return (false);
-        }
-    }
-
-
     // remove acentos de uma string
     public static String stripAccents(String input) {
         return input == null ? null :
                 Normalizer.normalize(input, Normalizer.Form.NFD)
                         .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
     }
-
-    // calcula hash MD5 de uma string
-    public String MD5(String md5) {
-        try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
-            byte[] array = md.digest(md5.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (int arr : array) {
-                sb.append(Integer.toHexString((arr & 0xFF) | 0x100).substring(1, 3));
-            }
-            return sb.toString();
-        } catch (java.security.NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
 
     // verifica mudancas de estado de conectividade
     private BroadcastReceiver networkStateReceiver = new BroadcastReceiver() {
@@ -567,10 +473,8 @@ public class MainActivity extends AppCompatActivity {
 
     };
 
-
     //verifica se tem sinal de dados
     public boolean verifica_sinal_dados() {
-
 
         try {
 
@@ -590,17 +494,13 @@ public class MainActivity extends AppCompatActivity {
 
         return false;
 
-
     }
 
-
     public void dialogo_aviso(String aviso) {
-
 
         if (alerta != null) {
             alerta.dismiss();
         }
-
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         final TextView et = new TextView(this);
@@ -624,9 +524,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
     public void dialogo_cpf(View view) {
-
 
         if (alerta != null) {
             alerta.dismiss();
@@ -645,12 +543,11 @@ public class MainActivity extends AppCompatActivity {
         int paddingDp = (int) (paddingPixel * density);
         et.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
 
-
         alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
 
                 String retorno = et.getText().toString();
-                if (isCPF(retorno)) {
+                if (CpfUtil.isValid(retorno)) {
                     valida_cpf(retorno);
                 } else {
                     if (retorno.length() > 0) {
@@ -664,12 +561,9 @@ public class MainActivity extends AppCompatActivity {
         alerta = alertDialogBuilder.create();
         alerta.show();
 
-
     }
 
-
-    public void dialogo_evento(View view) {
-
+    public void dialogoEvento(View view) {
 
         if (alerta != null) {
             alerta.dismiss();
@@ -686,7 +580,6 @@ public class MainActivity extends AppCompatActivity {
         float density = this.getResources().getDisplayMetrics().density;
         int paddingDp = (int) (paddingPixel * density);
         et.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
-
 
         alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -708,7 +601,6 @@ public class MainActivity extends AppCompatActivity {
 
         alerta = alertDialogBuilder.create();
         alerta.show();
-
 
     }
 
@@ -746,6 +638,8 @@ public class MainActivity extends AppCompatActivity {
 
                 }
 
+                ToastService.showToast("Código de acesso", getApplicationContext());
+
             }
         });
 
@@ -768,7 +662,6 @@ public class MainActivity extends AppCompatActivity {
         evento.setVisibility(View.VISIBLE);
         cpfd.setVisibility(View.VISIBLE);
 
-
         try {
 
             int rc = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA);
@@ -781,12 +674,10 @@ public class MainActivity extends AppCompatActivity {
             ex.printStackTrace();
         }
 
-
     }
 
     // validacao de documento por cpf
     public void valida_cpf(final String cpfe) {
-
 
         if (verifica_sinal_dados()) {
 
@@ -799,7 +690,6 @@ public class MainActivity extends AppCompatActivity {
             cpfd.setVisibility(View.GONE);
             evento.setVisibility(View.GONE);
 
-
             ConstraintSet set = new ConstraintSet();
             set.clone(layout1);
             set.clear(barcodeValue.getId(), ConstraintSet.TOP);
@@ -808,11 +698,9 @@ public class MainActivity extends AppCompatActivity {
             set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
             set.applyTo(layout1);
 
-
             RequestQueue queue = Volley.newRequestQueue(this);
             StringRequest postRequest = new StringRequest(Request.Method.GET, GlobalConstants.URL_CPF,
                     new Response.Listener<String>() {
-
 
                         @Override
                         public void onResponse(String response) {
@@ -848,9 +736,7 @@ public class MainActivity extends AppCompatActivity {
                                 barcodeValue.setText("\nErro de conectividade, tente novamente\n");
                                 prox.setVisibility(View.VISIBLE);
 
-
                             }
-
 
                         }
                     },
@@ -884,28 +770,26 @@ public class MainActivity extends AppCompatActivity {
             dialogo_aviso("Sem conectividade");
         }
 
-
     }
-
 
     // envia captura  para o servidor
     public void manda_captura() {
 
         try {
 
-            final item_captura proxi;
+            final ItemCaptura proxi;
             proxi = db.retorna_proximo();
-            if (!proxi.id.equals("")) {
+            if (!proxi.getId().equals("")) {
 
                 RequestQueue queue = Volley.newRequestQueue(this);
                 HashMap<String, Object> params = new HashMap<>();
-                params.put("certificado", proxi.certificado);
-                params.put("status", proxi.resultado.equals("0"));
-                params.put("data", proxi.horario);
-                params.put("evento", proxi.evento);
-                params.put("latitude", proxi.latitude);
-                params.put("longitude", proxi.longitude);
-                params.put("idDispositivo", proxi.idDispositivo);
+                params.put("certificado", proxi.getCertificado());
+                params.put("status", proxi.getResultado().equals("0"));
+                params.put("data", proxi.getHorario());
+                params.put("evento", proxi.getEvento());
+                params.put("latitude", proxi.getLatitude());
+                params.put("longitude", proxi.getLongitude());
+                params.put("idDispositivo", proxi.getIdDispositivo());
                 params.put("codigoAcesso", codigo_cfg);
 
                 JsonObjectRequest postRequest = new JsonObjectRequest(GlobalConstants.URL_CAPTURAS, new JSONObject(params),
@@ -918,7 +802,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     if (retorno) {
 
-                                        db.deleta_item(proxi.id);
+                                        db.deleta_item(proxi.getId());
                                         manda_captura();
 
                                     } else {
@@ -950,9 +834,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-
     }
-
 
     // busca chaves publicas e CRLs no meiaentrada.org.br
     public void pega_chaves_nv() {
@@ -966,7 +848,6 @@ public class MainActivity extends AppCompatActivity {
                         try {
 
                             JSONObject jsonObject = new JSONObject(response);
-
 
                             JSONArray retorno = jsonObject.getJSONArray("retorno");
 
@@ -1007,9 +888,7 @@ public class MainActivity extends AppCompatActivity {
 
         queue.add(stringRequest);
 
-
     }
-
 
     // busca emissor dentro do certificado
     retornoValidacao pega_emissor(String certDNE) {
@@ -1017,7 +896,6 @@ public class MainActivity extends AppCompatActivity {
         retornoValidacao retornove = new retornoValidacao();
         retornove.resultado = GlobalConstants.ERRO_INVALIDO;
         retornove.erro = true;
-
 
         try {
 
@@ -1040,12 +918,11 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             return retornove;
         }
-    }
 
+    }
 
     // executa validacao  do certificado localmente ( chave publica e CRl sao mandatorias, mesmo que a CRL nao tenha certif. revogados )
     retornoValidacao valida_certificado(String certDNE, String chavepublica, String crl) {
-
 
         retornoValidacao retornov = new retornoValidacao();
         retornov.resultado = GlobalConstants.ERRO_INVALIDO;
@@ -1105,10 +982,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
     // download de foto de estudante usando Picasso
     private void downloadImagem(String urlimagem) {
-
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -1146,9 +1021,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-
     }
-
 
     // cria base de dados local e rotinas de manipulacao
     public class DatabaseHandler extends SQLiteOpenHelper {
@@ -1156,7 +1029,6 @@ public class MainActivity extends AppCompatActivity {
         private DatabaseHandler(Context context) {
             super(context, "validadorDNE", null, 1);
         }
-
 
         @Override
         public void onCreate(SQLiteDatabase db) {
@@ -1175,28 +1047,26 @@ public class MainActivity extends AppCompatActivity {
             db.execSQL(CRIA_TABELA_CAPTURAS);
         }
 
-
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
             db.execSQL("DROP TABLE IF EXISTS capturas");
-
             onCreate(db);
+
         }
 
         private void adiciona_captura(String certif, boolean resul, String horario, String evento) {
 
             SQLiteDatabase dbx = this.getWritableDatabase();
-
             ContentValues values = new ContentValues();
 
-            values.put("certificado", MD5(certif));
+            values.put("certificado", HashUtil.getMD5(certif));
             values.put("resultado", resul);
             values.put("horario", horario);
             values.put("evento", evento);
             values.put("latitude", latitude);
             values.put("longitude", longitude);
-            values.put("idDispositivo", android_id);
+            values.put("idDispositivo", androidId);
 
             dbx.insert("capturas", null, values);
             dbx.close();
@@ -1207,46 +1077,45 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-
         private int total_capturas() {
+
             SQLiteDatabase db = this.getReadableDatabase();
             long cnt = DatabaseUtils.queryNumEntries(db, "capturas");
             Integer cnti = (int) cnt;
             db.close();
             return cnti;
+
         }
 
-
         private void deleta_item(String id) {
+
             SQLiteDatabase db = this.getWritableDatabase();
             db.delete("capturas", "id = ?", new String[]{id});
             db.close();
 
-
         }
 
-        private item_captura retorna_proximo() {
+        private ItemCaptura retorna_proximo() {
 
             String selectQuery = "SELECT * FROM capturas LIMIT 1";
             SQLiteDatabase db = this.getReadableDatabase();
             Cursor cursor = db.rawQuery(selectQuery, null);
 
-            item_captura item = new item_captura();
+            ItemCaptura item = new ItemCaptura();
 
-            item.id = "";
-
+            item.setId("");
 
             if (cursor.moveToFirst()) {
 
                 Integer idint = cursor.getInt(0);
-                item.id = idint.toString();
-                item.certificado = cursor.getString(1);
-                item.resultado = cursor.getString(2);
-                item.horario = cursor.getString(3);
-                item.evento = cursor.getString(4);
-                item.latitude = cursor.getString(5);
-                item.longitude = cursor.getString(6);
-                item.idDispositivo = cursor.getString(7);
+                item.setId(idint.toString());
+                item.setCertificado(cursor.getString(1));
+                item.setResultado(cursor.getString(2));
+                item.setHorario(cursor.getString(3));
+                item.setEvento(cursor.getString(4));
+                item.setLatitude(cursor.getString(5));
+                item.setLongitude(cursor.getString(6));
+                item.setIdDispositivo(cursor.getString(7));
 
             }
 
@@ -1256,9 +1125,6 @@ public class MainActivity extends AppCompatActivity {
             return item;
         }
 
-
     }
 
-
 }
-

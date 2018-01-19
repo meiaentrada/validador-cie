@@ -1,5 +1,7 @@
 package br.org.meiaentrada.validadorcie.util;
 
+import android.util.Log;
+
 import org.bouncycastle.util.encoders.Hex;
 
 import java.security.MessageDigest;
@@ -16,9 +18,15 @@ public class HashUtil {
 
     }
 
-    public String getMD5(String contentString) throws NoSuchAlgorithmException {
+    public static String getMD5(String contentString) {
 
-        return getMD5(contentString.getBytes());
+        try {
+            return getMD5(contentString.getBytes());
+        } catch (java.security.NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            Log.e("ERROR", e.getMessage());
+        }
+        return null;
 
     }
 
