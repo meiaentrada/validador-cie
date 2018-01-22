@@ -13,4 +13,11 @@ public class GlobalConstants {
     public static final String ERRO_REVOGADO = "\n     Documento revogado     \n";
     public static final String DOC_VALIDO = "\n     Documento válido     \n";
 
+
+//    public static final String URL_VALIDATE_OPERADOR = "https://prod.meiaentrada.org.br/public/operador-codigo-acesso/42b5714";
+
+    public static final String URL_VALIDATE_OPERADOR = "https://prod.meiaentrada.org.br/public/operador-codigo-acesso";
+
+    public static final String URL_VALIDADOR_MEIAENTRADA = "https://prod.meiaentrada.org.br/public/operador-codigo-acesso";
+
 }

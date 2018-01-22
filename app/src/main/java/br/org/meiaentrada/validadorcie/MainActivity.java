@@ -26,6 +26,7 @@ import android.database.DatabaseUtils;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.support.constraint.ConstraintLayout;
+import android.util.Log;
 import android.widget.EditText;
 import android.net.ConnectivityManager;
 import android.widget.ImageView;
@@ -116,6 +117,7 @@ import java.io.UnsupportedEncodingException;
 
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
 import br.org.meiaentrada.validadorcie.entity.ItemCaptura;
+import br.org.meiaentrada.validadorcie.service.HttpService;
 import br.org.meiaentrada.validadorcie.service.ToastService;
 import br.org.meiaentrada.validadorcie.util.CpfUtil;
 import br.org.meiaentrada.validadorcie.util.HashUtil;
@@ -247,11 +249,43 @@ public class MainActivity extends AppCompatActivity {
                 public void receiveDetections(Detector.Detections<Barcode> detections) {
                     final SparseArray<Barcode> barcodes = detections.getDetectedItems();
                     if (barcodes.size() != 0) {
+                        Log.e("teSTE", "äki");
                         barcodeValue.post(new Runnable() {
                             @Override
                             public void run() {
 
-                                String docum = barcodes.valueAt(0).displayValue;
+                                String document = barcodes.valueAt(0).displayValue;
+
+                                document = "http://cdne.com.br/SP281357/19920419";
+
+                                if (document.contains("cdne.com.br")) {
+
+                                    document = document
+                                            .replace("http://", "")
+                                            .replace("https://", "");
+
+                                    String[][] urlsRegexPatterns = {
+                                            {"(cdne.com.br/)(.+?(?=[^A-Z]))/(\\d+)", "$2;$3"},
+                                            {"(cdne.com.br/val/)(.+?(?=[^A-Z\\d+]))/dt/(\\d+)", "$2;$3"},
+                                            {"(cdne.com.br/validador/val/)(.+?(?=[^A-Z\\d+]))/(\\d+)"},
+                                            {"cdne.com.br/validador/convenio/)(.+?(?=[^A-Z\\d+]))/(\\d+)", "$2;$3"},
+                                            {"(cdne.com.br/validador/validardne\\?numero=)((.+?(?=[^A-Z\\d+])))\\&dataNascimento=(\\d+)", "$2;$4"}
+                                    };
+
+                                    String[] fields;
+                                    for (String[] pattern : urlsRegexPatterns) {
+
+                                        fields = document.replaceAll(pattern[0], pattern[1])
+                                                .split(";");
+
+                                        if (fields.length == 2)
+                                            break;
+
+                                    }
+
+//                                    if (fields.length != 2)
+
+                                }
 
                                 cameraSource.stop();
                                 cameraView.setVisibility(View.GONE);
@@ -268,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
                                 set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
                                 set.applyTo(layout1);
 
-                                retornoValidacao emissor = pega_emissor(docum);
+                                RetornoValidacao emissor = pega_emissor(document);
 
                                 if (evento_cfg.isEmpty()) {
                                     evento_cfg = "Evento indefinido";
@@ -279,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
                                     barcodeValue.setTextColor(Color.rgb(255, 0, 0));
                                     Long tsLong = System.currentTimeMillis() / 1000;
                                     String ts = tsLong.toString();
-                                    db.adiciona_captura(docum, emissor.erro, ts, evento_cfg);
+                                    db.adiciona_captura(document, emissor.erro, ts, evento_cfg);
                                     barcodeValue.setText(emissor.resultado);
                                     prox.setVisibility(View.VISIBLE);
 
@@ -291,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
                                     chavepublica_origem = sharedPref.getString(emissor_chave, "");
                                     crl_origem = sharedPref.getString(emissor_crl, "");
 
-                                    retornoValidacao resultado_valida = valida_certificado(docum, chavepublica_origem, crl_origem);
+                                    RetornoValidacao resultado_valida = valida_certificado(document, chavepublica_origem, crl_origem);
 
                                     if (resultado_valida.erro) {
 
@@ -304,7 +338,7 @@ public class MainActivity extends AppCompatActivity {
 
                                         if (verifica_sinal_dados()) {
 
-                                            String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(docum) + "/image.jpg";
+                                            String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(document) + "/image.jpg";
                                             downloadImagem(urlimagem);
                                             //dialogo_aviso(MD5(docum));
 
@@ -316,7 +350,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     Long tsLong = System.currentTimeMillis() / 1000;
                                     String ts = tsLong.toString();
-                                    db.adiciona_captura(docum, resultado_valida.erro, ts, evento_cfg);
+                                    db.adiciona_captura(document, resultado_valida.erro, ts, evento_cfg);
                                     barcodeValue.setText(resultado_valida.resultado);
 
                                 }
@@ -436,7 +470,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private class retornoValidacao {
+    private class RetornoValidacao {
 
         private String resultado;
         private boolean erro;
@@ -563,6 +597,44 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void dialogoValidacaoCasoUsoDataNascimento(View view) {
+
+        if (alerta != null) {
+            alerta.dismiss();
+        }
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+
+        final EditText editTextCodigoUso = new EditText(this);
+        editTextCodigoUso.setHint("Código de Uso");
+        editTextCodigoUso.getBackground().mutate().setColorFilter(getResources().getColor(R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
+
+        final EditText editTextDataNascimento = new EditText(this);
+        editTextDataNascimento.setHint("Data Nascimento");
+        editTextDataNascimento.getBackground().mutate().setColorFilter(getResources().getColor(R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
+
+        alertDialogBuilder.setView(editTextCodigoUso);
+        alertDialogBuilder.setView(editTextDataNascimento);
+
+//        int paddingPixel = 20;
+//        float density = this.getResources().getDisplayMetrics().density;
+//        int paddingDp = (int) (paddingPixel * density);
+//        editTextCodigoUso.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
+//        editTextDataNascimento.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
+
+
+        alertDialogBuilder.setNegativeButton(R.string.dialog_cancel, (dialog, id) -> {
+        });
+
+        alertDialogBuilder.setPositiveButton(R.string.dialog_ok, (dialog, id) -> {
+
+        });
+
+        alerta = alertDialogBuilder.create();
+        alerta.show();
+
+    }
+
     public void dialogoEvento(View view) {
 
         if (alerta != null) {
@@ -606,45 +678,103 @@ public class MainActivity extends AppCompatActivity {
 
     public void dialogo_codigo(View view) {
 
-        if (alerta != null) {
+        if (alerta != null)
             alerta.dismiss();
-        }
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle("Código de Acesso");
 
-        final EditText et = new EditText(this);
-        et.setHint("Informe o código de acesso");
-        et.getBackground().mutate().setColorFilter(getResources().getColor(R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
+        final EditText editText = new EditText(this);
+        editText.setHint("Informe o Código de Acesso");
+        editText.getBackground().mutate().setColorFilter(getResources().getColor(
+                R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
 
-        alertDialogBuilder.setView(et);
+        alertDialogBuilder.setView(editText);
 
         int paddingPixel = 20;
         float density = this.getResources().getDisplayMetrics().density;
         int paddingDp = (int) (paddingPixel * density);
-        et.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
+        editText.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
 
-        alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
+        alertDialogBuilder.setNegativeButton(R.string.dialog_cancel, (dialog, id) -> {
+        });
 
-                String retorno = et.getText().toString();
+        alertDialogBuilder.setPositiveButton(R.string.dialog_ok, (dialog, id) -> {
 
-                if (!retorno.isEmpty()) {
+            String codigoAcesso = editText.getText().toString().trim();
+            if (!codigoAcesso.isEmpty()) {
 
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putString("codigo", retorno);
-                    editor.apply();
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("codigo", codigoAcesso);
 
-                    codigo_cfg = sharedPref.getString("codigo", "");
+                codigo_cfg = sharedPref.getString("codigo", "");
 
-                }
+                String endpoint = GlobalConstants.URL_VALIDATE_OPERADOR + "/" + codigoAcesso;
+                JsonObjectRequest request = new JsonObjectRequest(
+                        Request.Method.GET, endpoint, null, response -> {
 
-                ToastService.showToast("Código de acesso", getApplicationContext());
+                    try {
+
+                        String email = response.getString("email");
+                        editor.putString("email", email);
+                        editor.apply();
+
+                    } catch (JSONException e) {
+
+                        Log.e("", e.getMessage());
+
+                    }
+
+                }, error ->
+                        Log.e(HttpService.class.getName(), error.getMessage()));
+
+                RequestQueue queue = Volley.newRequestQueue(this);
+
+                JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                        (Request.Method.GET, endpoint, null, new Response.Listener<JSONObject>() {
+
+                            @Override
+                            public void onResponse(JSONObject response) {
+
+                                try {
+
+                                    String email = response.getString("email");
+                                    editor.putString("email", email);
+                                    editor.apply();
+
+                                } catch (JSONException e) {
+
+                                    Log.e("", e.getMessage());
+
+                                }
+
+                            }
+
+                        }, new Response.ErrorListener() {
+
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                // TODO Auto-generated method stub
+
+                            }
+
+                        });
+
+                queue.add(jsObjRequest);
+                ToastService.showToast("Código de acesso salvo.", getApplicationContext());
+
+            } else {
+
+                ToastService.showToast("Código de acesso em branco.", getApplicationContext());
 
             }
+
         });
 
         alerta = alertDialogBuilder.create();
         alerta.show();
+
+        String email = sharedPref.getString("email", "");
 
     }
 
@@ -673,6 +803,11 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+
+    }
+
+    public void validarCiePor(String codigoUso, Long dataNascimento) {
+
 
     }
 
@@ -891,9 +1026,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // busca emissor dentro do certificado
-    retornoValidacao pega_emissor(String certDNE) {
+    RetornoValidacao pega_emissor(String certDNE) {
 
-        retornoValidacao retornove = new retornoValidacao();
+        RetornoValidacao retornove = new RetornoValidacao();
         retornove.resultado = GlobalConstants.ERRO_INVALIDO;
         retornove.erro = true;
 
@@ -922,9 +1057,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // executa validacao  do certificado localmente ( chave publica e CRl sao mandatorias, mesmo que a CRL nao tenha certif. revogados )
-    retornoValidacao valida_certificado(String certDNE, String chavepublica, String crl) {
+    RetornoValidacao valida_certificado(String certDNE, String chavepublica, String crl) {
 
-        retornoValidacao retornov = new retornoValidacao();
+        RetornoValidacao retornov = new RetornoValidacao();
         retornov.resultado = GlobalConstants.ERRO_INVALIDO;
         retornov.erro = true;
 

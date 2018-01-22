@@ -19,8 +19,10 @@
         android:clickable="true"
         app:layout_constraintBottom_toTopOf="@+id/foto"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/resultado" />
+        app:layout_constraintTop_toTopOf="@+id/resultado"
+        app:layout_constraintVertical_bias="0.0" />
 
 
     <ImageView
@@ -77,6 +79,15 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <Button
+        android:id="@+id/codigo_uso_dt_nascimento"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/cpf"
+        android:onClick="dialogoValidacaoCasoUsoDataNascimento"
+        app:layout_constraintBottom_toTopOf="@+id/cpf_definir"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/cpf_definir"
