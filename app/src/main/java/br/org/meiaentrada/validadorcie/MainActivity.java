@@ -26,6 +26,9 @@ import android.database.DatabaseUtils;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.FloatingActionButton;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.net.ConnectivityManager;
 import android.widget.ImageView;
@@ -151,6 +154,11 @@ public class MainActivity extends AppCompatActivity {
     String longitude;
     String androidId;
 
+    FloatingActionButton fab_principal, fab_item_1, fab_item_2;
+    Animation fab_open, fab_close, fab_rotate_clock, fab_rotate_anti_clock;
+
+    boolean isOpen = false;
+
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -176,6 +184,36 @@ public class MainActivity extends AppCompatActivity {
         evento.setText(evento_cfg);
         layout1 = findViewById(R.id.layout1);
         androidId = Secure.ANDROID_ID;
+
+        fab_principal = findViewById(R.id.fab);
+        fab_item_1 = findViewById(R.id.item1);
+        fab_item_2 = findViewById(R.id.item2);
+
+        fab_open = AnimationUtils.loadAnimation(this, R.anim.fab_open);
+        fab_close = AnimationUtils.loadAnimation(this, R.anim.fab_close);
+        fab_rotate_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
+        fab_rotate_anti_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
+
+        fab_principal.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (isOpen){
+                    fab_item_1.startAnimation(fab_close);
+                    fab_item_2.startAnimation(fab_close);
+                    fab_principal.startAnimation(fab_rotate_anti_clock);
+                    fab_item_1.setClickable(false);
+                    fab_item_2.setClickable(false);
+                    isOpen = false;
+                }else {
+                    fab_item_1.startAnimation(fab_open);
+                    fab_item_2.startAnimation(fab_open);
+                    fab_principal.startAnimation(fab_rotate_clock);
+                    fab_item_1.setClickable(true);
+                    fab_item_2.setClickable(true);
+                    isOpen = true;
+                }
+            }
+        });
 
         if (checkAndRequestPermissions()) {
 
