@@ -3,6 +3,7 @@ package br.org.meiaentrada.validadorcie;
 import java.util.Map;
 import java.util.HashMap;
 
+import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -16,6 +17,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.EditText;
 import android.net.ConnectivityManager;
 import android.widget.ImageView;
@@ -631,11 +633,11 @@ public class MainActivity extends AppCompatActivity {
         alertDialogBuilder.setView(editTextCodigoUso);
         alertDialogBuilder.setView(editTextDataNascimento);
 
-//        int paddingPixel = 20;
-//        float density = this.getResources().getDisplayMetrics().density;
-//        int paddingDp = (int) (paddingPixel * density);
-//        editTextCodigoUso.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
-//        editTextDataNascimento.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
+        int paddingPixel = 20;
+        float density = this.getResources().getDisplayMetrics().density;
+        int paddingDp = (int) (paddingPixel * density);
+        editTextCodigoUso.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
+        editTextDataNascimento.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
 
 
         alertDialogBuilder.setNegativeButton(R.string.dialog_cancel, (dialog, id) -> {
@@ -699,7 +701,7 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setTitle("Código de Acesso");
 
-        final EditText editText = new EditText(this);
+        EditText editText = new EditText(this);
         editText.setHint("Informe o Código de Acesso");
         editText.getBackground().mutate().setColorFilter(getResources().getColor(
                 R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
@@ -746,32 +748,21 @@ public class MainActivity extends AppCompatActivity {
                 RequestQueue queue = Volley.newRequestQueue(this);
 
                 JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                        (Request.Method.GET, endpoint, null, new Response.Listener<JSONObject>() {
+                        (Request.Method.GET, endpoint, null, response -> {
 
-                            @Override
-                            public void onResponse(JSONObject response) {
+                            try {
 
-                                try {
+                                String email = response.getString("email");
+                                editor.putString("email", email);
+                                editor.apply();
 
-                                    String email = response.getString("email");
-                                    editor.putString("email", email);
-                                    editor.apply();
-
-                                } catch (JSONException e) {
-
-                                    Log.e("", e.getMessage());
-
-                                }
-
+                            } catch (JSONException e) {
+                                Log.e("", e.getMessage());
                             }
 
-                        }, new Response.ErrorListener() {
+                        }, error -> {
 
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                // TODO Auto-generated method stub
-
-                            }
+                            // TODO Auto-generated method stub
 
                         });
 
@@ -788,8 +779,6 @@ public class MainActivity extends AppCompatActivity {
 
         alerta = alertDialogBuilder.create();
         alerta.show();
-
-        String email = sharedPref.getString("email", "");
 
     }
 

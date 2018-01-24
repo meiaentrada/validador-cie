@@ -8,6 +8,7 @@
     
     <string name="dialog_ok">OK</string>
     <string name="dialog_cancel">Cancelar</string>
+    <string name="dialog_cpf_input">Informe o Código de Acesso</string>
 
     <string name="codigo_uso">Código de Uso</string>
     <string name="dt_nascimento">Data de Nascimento</string>
