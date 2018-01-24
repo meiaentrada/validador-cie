@@ -7,6 +7,13 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Map;
+
 import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
 
 
@@ -27,47 +34,75 @@ public class BarcodeService {
 
     public static String[] getCodigoAndDataNascimento(String barcodeData) {
 
+        String convertionType = getURLConvertionType(barcodeData);
+
         barcodeData = barcodeData
-                .replace("http://", "")
-                .replace("https://", "")
-                .replace("www.", "")
-                .replace("#val/", "val/");
+                .replace("/#val/", "/")
+                .replace("/val/", "/")
+                .replace("/dt/", "/")
+                .replace("&dataNascimento=", "/")
+                .replace("?numero=", "/")
+                .replace("/?numero=", "/")
+                .replace("/validador/", "/")
+                .replace("/convenio/", "")
+                .replace("/validardne/", "/")
+                .replace("/validardne", "/")
+        ;
 
-        String[][] urlsRegexPatterns = {
-                {"(cdne.com.br/)(.+?(?=[^A-Z]))/(\\d+)", "$2;$3", null},
-                {"(cdne.com.br/val/)(.+?(?=[^A-Z\\d+]))/dt/(\\d+)", "$2;$3", Long.class.getName()},
-                {"(cdne.com.br/validador/val/)(.+?(?=[^A-Z\\d+]))/(\\d+)", null},
-                {"(cdne.com.br/validador/convenio/)(.+?(?=[^A-Z\\d+]))/(\\d+)", "$2;$3", null},
-                {"(cdne.com.br/validador/validardne\\?numero=)((.+?(?=[^A-Z\\d+])))\\&dataNascimento=(\\d+)", "$2;$4", null}
-        };
-
-        for (String[] pattern : urlsRegexPatterns) {
-
-            String[] fields = barcodeData.replaceAll(pattern[0], pattern[1]).split(";");
-            if (fields.length == 2)
-                return new String[]{fields[0], fields[1], pattern[2]};
-
-        }
+        String[] fields = barcodeData.replaceAll("(.+?(?=[^A-Z]))/(\\d+)", "$1;$2").split(";");
+        if (fields.length == 3)
+            return new String[]{fields[1], getDataNascimento(fields[2], convertionType)};
         return new String[]{};
 
     }
 
-    public String dateFormatter(String dataNascimento) {
+    public static String getDataNascimento(String dataNascimento, String convertionType) {
 
-        LocalDateTime temp = new LocalDateTime(dataNascimento);
-        DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd");
+        String convertedDataNascimento = "";
 
+        switch (convertionType) {
+
+            case "string_us":
+                DateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH);
+                Date date = null;
+                try {
+                    date = format.parse(dataNascimento);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+                convertedDataNascimento = date != null ? format.format(date) : "";
+                break;
+            case "unix_timestamp":
+                LocalDateTime temp = new org.joda.time.LocalDateTime(Long.parseLong(dataNascimento)).plusHours(3);
+                DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd");
+                convertedDataNascimento = dateTimeFormatter.print(temp);
+                break;
+
+        }
+        return convertedDataNascimento;
+
+    }
+
+    public static String getURLConvertionType(String argUrl) {
+
+        String[][] urls = {
+                {"cdne.com.br/#val/", "unix_timestamp"},
+                {"cdne.com.br/val/", "unix_timestamp"},
+                {"cdne.com.br/", "string_us"}
+        };
+
+        for (String[] url : urls)
+            if (argUrl.contains(url[0]))
+                return url[1];
         return null;
 
     }
 
-    public String dateFormatter(Long timestamp) {
-
-        LocalDateTime date = new LocalDateTime(timestamp).plusHours(3);
-        DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd");
-
-        return dateTimeFormatter.print(date);
-
-    }
+    //    public String getDataNascimento(String dataNascimento) {
+//
+//
+//
+//    }
 
 }

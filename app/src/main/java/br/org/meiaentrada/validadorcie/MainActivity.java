@@ -17,8 +17,6 @@ package br.org.meiaentrada.validadorcie;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
@@ -208,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
         fab_menu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (isOpen){
+                if (isOpen) {
                     fab_codigo_acesso.startAnimation(anim_fab_close);
                     fab_cpf.startAnimation(anim_fab_close);
                     fab_evento.startAnimation(anim_fab_close);
@@ -220,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
                     fab_evento.setClickable(false);
 
                     isOpen = false;
-                }else {
+                } else {
                     fab_codigo_acesso.startAnimation(anim_fab_open);
                     fab_cpf.startAnimation(anim_fab_open);
                     fab_cpf.startAnimation(anim_fab_open);
@@ -344,24 +342,6 @@ public class MainActivity extends AppCompatActivity {
                                     String dataNascimento = fields[1];
                                     String codigoAcesso = sharedPref.getString("codigo", "");
                                     String evento = sharedPref.getString("evento", "");
-
-                                    Date date;
-                                    if (fields[3] == null) {
-                                        try {
-                                            DateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH);
-                                            date = format.parse(dataNascimento);
-                                            format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-                                            dataNascimento = format.format(date);
-
-                                        } catch (ParseException e) {
-                                            e.printStackTrace();
-                                        }
-                                    } else if (Long.class.getName().equals(fields[3])) {
-                                        org.joda.time.LocalDateTime temp = new org.joda.time.LocalDateTime(Long.parseLong(dataNascimento)).plusHours(3);
-                                        org.joda.time.format.DateTimeFormatter dtfOut = DateTimeFormat.forPattern("yyyyMMdd");
-
-                                        dataNascimento = dtfOut.print(temp);
-                                    }
 
                                     RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
                                     StringRequest stringRequest = new StringRequest(Request.Method.GET,
