@@ -17,8 +17,6 @@ package br.org.meiaentrada.validadorcie;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
@@ -168,7 +166,9 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton fab_menu;
     Animation anim_fab_open, anim_fab_close, anim_fab_rotate_clock, anim_fab_rotate_anti_clock;
 
-    boolean isOpen = false;
+    TextView lblChaveAcesso, lblLocalEvento, lblConsultaCPF;
+
+    boolean isMenuOpen = false;
 
     private Gson jsonParser = new Gson();
 
@@ -205,13 +205,20 @@ public class MainActivity extends AppCompatActivity {
         anim_fab_rotate_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
         anim_fab_rotate_anti_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
 
+        lblChaveAcesso = findViewById(R.id.lblChaveAcesso);
+        lblLocalEvento = findViewById(R.id.lblLocalEvento);
+        lblConsultaCPF = findViewById(R.id.lblConsultaCPF);
+
         fab_menu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (isOpen){
+                if (isMenuOpen){
                     fab_codigo_acesso.startAnimation(anim_fab_close);
                     fab_cpf.startAnimation(anim_fab_close);
                     fab_evento.startAnimation(anim_fab_close);
+                    lblChaveAcesso.startAnimation(anim_fab_close);
+                    lblLocalEvento.startAnimation(anim_fab_close);
+                    lblConsultaCPF.startAnimation(anim_fab_close);
 
                     fab_menu.startAnimation(anim_fab_rotate_anti_clock);
 
@@ -219,19 +226,22 @@ public class MainActivity extends AppCompatActivity {
                     fab_cpf.setClickable(false);
                     fab_evento.setClickable(false);
 
-                    isOpen = false;
+                    isMenuOpen = false;
                 }else {
                     fab_codigo_acesso.startAnimation(anim_fab_open);
                     fab_cpf.startAnimation(anim_fab_open);
                     fab_cpf.startAnimation(anim_fab_open);
                     fab_evento.startAnimation(anim_fab_open);
+                    lblChaveAcesso.startAnimation(anim_fab_open);
+                    lblLocalEvento.startAnimation(anim_fab_open);
+                    lblConsultaCPF.startAnimation(anim_fab_open);
 
                     fab_menu.startAnimation(anim_fab_rotate_clock);
 
                     fab_codigo_acesso.setClickable(true);
                     fab_cpf.setClickable(true);
                     fab_evento.setClickable(true);
-                    isOpen = true;
+                    isMenuOpen = true;
                 }
             }
         });
