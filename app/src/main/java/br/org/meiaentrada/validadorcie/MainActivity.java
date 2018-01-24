@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton fabMenu;
     Animation animFabOpen, animFabClose, animFabRotateClock, animFabRotateAntiClock;
 
-    TextView lblChaveAcesso, lblLocalEvento, lblConsultaCPF;
+    TextView lblChaveAcesso, lblLocalEvento, lblConsultaCPF, lblConsultaDataNascimento;
 
     boolean isMenuOpen = false;
 
@@ -178,12 +178,12 @@ public class MainActivity extends AppCompatActivity {
         fabCodigoAcesso = findViewById(R.id.codigo_definir);
         fabCpf = findViewById(R.id.cpf_definir);
         fabEvento = findViewById(R.id.evento_definir);
-
         fabCodigoDataNascimento = findViewById(R.id.codigo_uso_dt_nascimento);
 
         lblChaveAcesso = findViewById(R.id.lblChaveAcesso);
         lblLocalEvento = findViewById(R.id.lblLocalEvento);
         lblConsultaCPF = findViewById(R.id.lblConsultaCPF);
+        lblConsultaDataNascimento = findViewById(R.id.lblDataNascimento);
 
         animFabOpen = AnimationUtils.loadAnimation(this, R.anim.fab_open);
         animFabClose = AnimationUtils.loadAnimation(this, R.anim.fab_close);
@@ -196,10 +196,12 @@ public class MainActivity extends AppCompatActivity {
                 fabCodigoAcesso.startAnimation(animFabClose);
                 fabCpf.startAnimation(animFabClose);
                 fabEvento.startAnimation(animFabClose);
+                fabCodigoDataNascimento.startAnimation(animFabClose);
+
+                lblConsultaDataNascimento.startAnimation(animFabClose);
                 lblChaveAcesso.startAnimation(animFabClose);
                 lblLocalEvento.startAnimation(animFabClose);
                 lblConsultaCPF.startAnimation(animFabClose);
-                fabCodigoDataNascimento.startAnimation(animFabClose);
 
                 fabMenu.startAnimation(animFabRotateAntiClock);
 
@@ -214,10 +216,12 @@ public class MainActivity extends AppCompatActivity {
                 fabCpf.startAnimation(animFabOpen);
                 fabCpf.startAnimation(animFabOpen);
                 fabEvento.startAnimation(animFabOpen);
+                fabCodigoDataNascimento.startAnimation(animFabOpen);
+
+                lblConsultaDataNascimento.startAnimation(animFabOpen);
                 lblChaveAcesso.startAnimation(animFabOpen);
                 lblLocalEvento.startAnimation(animFabOpen);
                 lblConsultaCPF.startAnimation(animFabOpen);
-                fabCodigoDataNascimento.startAnimation(animFabOpen);
 
                 fabMenu.startAnimation(animFabRotateClock);
 
