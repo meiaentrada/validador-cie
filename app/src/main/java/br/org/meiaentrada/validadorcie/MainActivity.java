@@ -1,23 +1,5 @@
-/*
-
-Validador CIE - meiaentrada.org.br
-Data: 31.12.2017
-email: tecnologia@meiaentrada.org.br
-
-Ambiente de compilação recomendado:
-Android Studio 3.0.1
-Build #AI-171.4443003, built on November 9, 2017
-JRE: 1.8.0_152-release-915-b08 x86_64
-JVM: OpenJDK 64-Bit Server VM by JetBrains s.r.o
-
-*/
-
 package br.org.meiaentrada.validadorcie;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -69,25 +51,13 @@ import android.view.View;
 import android.widget.TextView;
 
 import java.io.StringReader;
-import java.security.KeyFactory;
-import java.security.Security;
-import java.security.cert.X509CRL;
-import java.security.cert.X509CRLEntry;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Date;
+
 
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.Attribute;
 import org.bouncycastle.cert.AttributeCertificateHolder;
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
-import org.bouncycastle.cert.X509CRLHolder;
-import org.bouncycastle.cert.jcajce.JcaX509CRLConverter;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.util.encoders.Base64;
-import org.joda.time.format.DateTimeFormat;
+
 import org.json.*;
 
 import android.graphics.PorterDuff;
@@ -113,6 +83,7 @@ import android.provider.Settings.Secure;
 import android.text.InputType;
 
 import com.google.gson.Gson;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.MemoryPolicy;
 import com.squareup.picasso.NetworkPolicy;
@@ -120,41 +91,47 @@ import com.android.volley.AuthFailureError;
 
 import android.util.DisplayMetrics;
 
-import java.io.UnsupportedEncodingException;
-
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
-import br.org.meiaentrada.validadorcie.entity.ItemCaptura;
-import br.org.meiaentrada.validadorcie.entity.ValidacaoDTO;
+import br.org.meiaentrada.validadorcie.model.ItemCaptura;
+import br.org.meiaentrada.validadorcie.model.RetornoValidacao;
+import br.org.meiaentrada.validadorcie.model.ValidacaoDTO;
 import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
 import br.org.meiaentrada.validadorcie.service.BarcodeService;
+import br.org.meiaentrada.validadorcie.service.CertificadoService;
 import br.org.meiaentrada.validadorcie.service.HttpService;
 import br.org.meiaentrada.validadorcie.service.ToastService;
 import br.org.meiaentrada.validadorcie.util.CpfUtil;
 import br.org.meiaentrada.validadorcie.util.HashUtil;
+import br.org.meiaentrada.validadorcie.util.StringContentEncoder;
 
 
 public class MainActivity extends AppCompatActivity {
 
     BarcodeDetector barcodeDetector;
-    String evento_cfg;
+    String eventoCfg;
     SharedPreferences sharedPref;
     DatabaseHandler db = new DatabaseHandler(this);
+
     private CameraSource cameraSource;
     private SurfaceView cameraView;
     private TextView barcodeValue;
     private TextView conectado;
     private TextView evento;
     private ProgressBar fotop;
-    private String codigo_cfg;
-    private String crl_origem;
-    private String chavepublica_origem;
+    private String codigoCfg;
+    private String crlOrigem;
+    private String chavepublicaOrigem;
     private ImageView foto;
+
     private FloatingActionButton prox;
-    private FloatingActionButton fab_evento;
-    private FloatingActionButton fab_codigo_acesso;
-    private FloatingActionButton fab_cpf;
+    private FloatingActionButton fabEvento;
+    private FloatingActionButton fabCodigoAcesso;
+    private FloatingActionButton fabCpf;
+    private FloatingActionButton fabCodigoDataNascimento;
+
     private ConstraintLayout layout1;
     public AlertDialog alerta;
+
     LocationManager locationManager;
     String provider;
     MyLocationListener mylistener;
@@ -163,14 +140,16 @@ public class MainActivity extends AppCompatActivity {
     String longitude;
     String androidId;
 
-    FloatingActionButton fab_menu;
-    Animation anim_fab_open, anim_fab_close, anim_fab_rotate_clock, anim_fab_rotate_anti_clock;
+    FloatingActionButton fabMenu;
+    Animation animFabOpen, animFabClose, animFabRotateClock, animFabRotateAntiClock;
 
     TextView lblChaveAcesso, lblLocalEvento, lblConsultaCPF;
 
     boolean isMenuOpen = false;
 
     private Gson jsonParser = new Gson();
+
+    private CertificadoService certificadoService = new CertificadoService();
 
     @Override
     public void onCreate(Bundle state) {
@@ -179,8 +158,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        evento_cfg = sharedPref.getString("evento", "");
-        codigo_cfg = sharedPref.getString("codigo", "");
+        eventoCfg = sharedPref.getString("evento", "");
+        codigoCfg = sharedPref.getString("codigo", "");
         cameraView = findViewById(R.id.camera);
         barcodeValue = findViewById(R.id.resultado);
         prox = findViewById(R.id.proximo);
@@ -191,59 +170,64 @@ public class MainActivity extends AppCompatActivity {
         fotop.setVisibility(View.GONE);
         conectado = findViewById(R.id.conectado);
         evento = findViewById(R.id.evento);
-        evento.setText(evento_cfg);
+        evento.setText(eventoCfg);
         layout1 = findViewById(R.id.layout1);
         androidId = Secure.ANDROID_ID;
 
-        fab_menu = findViewById(R.id.menu);
-        fab_codigo_acesso = findViewById(R.id.codigo_definir);
-        fab_cpf = findViewById(R.id.cpf_definir);
-        fab_evento = findViewById(R.id.evento_definir);
+        fabMenu = findViewById(R.id.menu);
+        fabCodigoAcesso = findViewById(R.id.codigo_definir);
+        fabCpf = findViewById(R.id.cpf_definir);
+        fabEvento = findViewById(R.id.evento_definir);
 
-        anim_fab_open = AnimationUtils.loadAnimation(this, R.anim.fab_open);
-        anim_fab_close = AnimationUtils.loadAnimation(this, R.anim.fab_close);
-        anim_fab_rotate_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
-        anim_fab_rotate_anti_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
+        fabCodigoDataNascimento = findViewById(R.id.codigo_uso_dt_nascimento);
 
         lblChaveAcesso = findViewById(R.id.lblChaveAcesso);
         lblLocalEvento = findViewById(R.id.lblLocalEvento);
         lblConsultaCPF = findViewById(R.id.lblConsultaCPF);
 
-        fab_menu.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (isMenuOpen){
-                    fab_codigo_acesso.startAnimation(anim_fab_close);
-                    fab_cpf.startAnimation(anim_fab_close);
-                    fab_evento.startAnimation(anim_fab_close);
-                    lblChaveAcesso.startAnimation(anim_fab_close);
-                    lblLocalEvento.startAnimation(anim_fab_close);
-                    lblConsultaCPF.startAnimation(anim_fab_close);
+        animFabOpen = AnimationUtils.loadAnimation(this, R.anim.fab_open);
+        animFabClose = AnimationUtils.loadAnimation(this, R.anim.fab_close);
+        animFabRotateClock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
+        animFabRotateAntiClock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
 
-                    fab_menu.startAnimation(anim_fab_rotate_anti_clock);
+        fabMenu.setOnClickListener(view -> {
 
-                    fab_codigo_acesso.setClickable(false);
-                    fab_cpf.setClickable(false);
-                    fab_evento.setClickable(false);
+            if (isMenuOpen) {
+                fabCodigoAcesso.startAnimation(animFabClose);
+                fabCpf.startAnimation(animFabClose);
+                fabEvento.startAnimation(animFabClose);
+                lblChaveAcesso.startAnimation(animFabClose);
+                lblLocalEvento.startAnimation(animFabClose);
+                lblConsultaCPF.startAnimation(animFabClose);
+                fabCodigoDataNascimento.startAnimation(animFabClose);
 
-                    isMenuOpen = false;
-                }else {
-                    fab_codigo_acesso.startAnimation(anim_fab_open);
-                    fab_cpf.startAnimation(anim_fab_open);
-                    fab_cpf.startAnimation(anim_fab_open);
-                    fab_evento.startAnimation(anim_fab_open);
-                    lblChaveAcesso.startAnimation(anim_fab_open);
-                    lblLocalEvento.startAnimation(anim_fab_open);
-                    lblConsultaCPF.startAnimation(anim_fab_open);
+                fabMenu.startAnimation(animFabRotateAntiClock);
 
-                    fab_menu.startAnimation(anim_fab_rotate_clock);
+                fabCodigoAcesso.setClickable(false);
+                fabCpf.setClickable(false);
+                fabCodigoDataNascimento.setClickable(false);
+                fabEvento.setClickable(false);
 
-                    fab_codigo_acesso.setClickable(true);
-                    fab_cpf.setClickable(true);
-                    fab_evento.setClickable(true);
-                    isMenuOpen = true;
-                }
+                isMenuOpen = false;
+            } else {
+                fabCodigoAcesso.startAnimation(animFabOpen);
+                fabCpf.startAnimation(animFabOpen);
+                fabCpf.startAnimation(animFabOpen);
+                fabEvento.startAnimation(animFabOpen);
+                lblChaveAcesso.startAnimation(animFabOpen);
+                lblLocalEvento.startAnimation(animFabOpen);
+                lblConsultaCPF.startAnimation(animFabOpen);
+                fabCodigoDataNascimento.startAnimation(animFabOpen);
+
+                fabMenu.startAnimation(animFabRotateClock);
+
+                fabCodigoAcesso.setClickable(true);
+                fabCpf.setClickable(true);
+                fabEvento.setClickable(true);
+                fabCodigoDataNascimento.setClickable(true);
+                isMenuOpen = true;
             }
+
         });
 
 
@@ -260,9 +244,8 @@ public class MainActivity extends AppCompatActivity {
 
                 Location location = locationManager.getLastKnownLocation(provider);
                 mylistener = new MyLocationListener();
-                if (location != null) {
+                if (location != null)
                     mylistener.onLocationChanged(location);
-                }
                 locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
 
             }
@@ -317,148 +300,126 @@ public class MainActivity extends AppCompatActivity {
                 public void receiveDetections(Detector.Detections<Barcode> detections) {
                     final SparseArray<Barcode> barcodes = detections.getDetectedItems();
                     if (barcodes.size() != 0) {
-                        barcodeValue.post(new Runnable() {
-                            @Override
-                            public void run() {
+                        barcodeValue.post(() -> {
 
-                                String document = barcodes.valueAt(0).displayValue;
+                            String document = barcodes.valueAt(0).displayValue;
 
-                                cameraSource.stop();
-                                cameraView.setVisibility(View.GONE);
-                                fab_evento.setVisibility(View.GONE);
-                                fab_codigo_acesso.setVisibility(View.GONE);
-                                fab_cpf.setVisibility(View.GONE);
-                                evento.setVisibility(View.GONE);
+                            cameraSource.stop();
+                            cameraView.setVisibility(View.GONE);
+                            fabEvento.setVisibility(View.GONE);
+                            fabCodigoAcesso.setVisibility(View.GONE);
+                            fabCpf.setVisibility(View.GONE);
+                            evento.setVisibility(View.GONE);
+                            fabCodigoDataNascimento.setVisibility(View.GONE);
 
-                                ConstraintSet set = new ConstraintSet();
-                                set.clone(layout1);
-                                set.clear(barcodeValue.getId(), ConstraintSet.TOP);
-                                set.clear(barcodeValue.getId(), ConstraintSet.BOTTOM);
-                                set.connect(barcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
-                                set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
-                                set.applyTo(layout1);
+                            ConstraintSet set = new ConstraintSet();
+                            set.clone(layout1);
+                            set.clear(barcodeValue.getId(), ConstraintSet.TOP);
+                            set.clear(barcodeValue.getId(), ConstraintSet.BOTTOM);
+                            set.connect(barcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
+                            set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
+                            set.applyTo(layout1);
 
-                                if (evento_cfg.isEmpty())
-                                    evento_cfg = "Evento indefinido";
+                            eventoCfg = sharedPref.getString("evento", "");
+                            if (eventoCfg.isEmpty())
+                                eventoCfg = "Evento indefinido";
 
-                                document = "https://www.cdne.com.br/#val/8EZ7X5/dt/623901600000";
+                            BarcodeType barcodeType = BarcodeService.getBarcodeType(document);
 
-                                BarcodeType barcodeType = BarcodeService.getBarcodeType(document);
+                            if (barcodeType == BarcodeType.CDNE_URL) {
 
-                                if (barcodeType == BarcodeType.CDNE_URL) {
+                                String[] fields =
+                                        BarcodeService.getCodigoAndDataNascimento(document);
 
-                                    String[] fields =
-                                            BarcodeService.getCodigoAndDataNascimento(document);
+                                String codigoUso = fields[0];
+                                String dataNascimento = fields[1];
+                                String codigoAcesso = sharedPref.getString("codigo", "");
+                                String evento = sharedPref.getString("evento", "");
 
-                                    String codigoUso = fields[0];
-                                    String dataNascimento = fields[1];
-                                    String codigoAcesso = sharedPref.getString("codigo", "");
-                                    String evento = sharedPref.getString("evento", "");
+                                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+                                StringRequest stringRequest = new StringRequest(Request.Method.GET,
+                                        GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
+                                                "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
 
-                                    Date date;
-                                    if (fields[3] == null) {
-                                        try {
-                                            DateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH);
-                                            date = format.parse(dataNascimento);
-                                            format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-                                            dataNascimento = format.format(date);
+                                    Long tsLong = System.currentTimeMillis() / 1000;
+                                    String ts = tsLong.toString();
 
-                                        } catch (ParseException e) {
-                                            e.printStackTrace();
-                                        }
-                                    } else if (Long.class.getName().equals(fields[3])) {
-                                        org.joda.time.LocalDateTime temp = new org.joda.time.LocalDateTime(Long.parseLong(dataNascimento)).plusHours(3);
-                                        org.joda.time.format.DateTimeFormatter dtfOut = DateTimeFormat.forPattern("yyyyMMdd");
-
-                                        dataNascimento = dtfOut.print(temp);
-                                    }
-
-                                    RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-                                    StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                                            GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
-                                                    "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
-
-                                        ValidacaoDTO validacaoDTO = jsonParser.fromJson(response, ValidacaoDTO.class);
-                                        if (!validacaoDTO.getStatus()) {
-
-                                            barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                                            prox.setVisibility(View.VISIBLE);
-
-                                        } else {
-
-                                            barcodeValue.setTextColor(Color.rgb(0, 255, 0));
-
-                                            if (verifica_sinal_dados())
-                                                downloadImagem(validacaoDTO.getFoto());
-                                            else
-                                                prox.setVisibility(View.VISIBLE);
-
-                                        }
-
-                                        Long tsLong = System.currentTimeMillis() / 1000;
-                                        String ts = tsLong.toString();
-                                        db.adicionaCaptura(null, validacaoDTO.getStatus(), ts, evento);
-                                        barcodeValue.setText("");
-
-                                    }, error -> Log.e(MainActivity.class.getName(), error.getMessage()));
-
-                                    queue.add(stringRequest);
-
-                                } else {
-
-                                    RetornoValidacao emissor = pega_emissor(document);
-
-                                    if (emissor.erro) {
+                                    ValidacaoDTO validacaoDTO = jsonParser.fromJson(response, ValidacaoDTO.class);
+                                    if (!validacaoDTO.getStatus()) {
 
                                         barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                                        Long tsLong = System.currentTimeMillis() / 1000;
-                                        String ts = tsLong.toString();
-                                        db.adicionaCaptura(document, emissor.erro, ts, evento_cfg);
-                                        barcodeValue.setText(emissor.resultado);
+                                        barcodeValue.setText("Documento Invalido!");
                                         prox.setVisibility(View.VISIBLE);
 
                                     } else {
 
-                                        String emissor_chave = emissor.resultado.concat("_chave");
-                                        String emissor_crl = emissor.resultado.concat("_crl");
+                                        barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                        barcodeValue.setText("Documento Valido!");
 
-                                        chavepublica_origem = sharedPref.getString(emissor_chave, "");
-                                        crl_origem = sharedPref.getString(emissor_crl, "");
-
-                                        RetornoValidacao resultado_valida = valida_certificado(document, chavepublica_origem, crl_origem);
-
-                                        if (resultado_valida.erro) {
-
-                                            barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                        if (verificaSinalDados())
+                                            downloadImagem(validacaoDTO.getFoto());
+                                        else
                                             prox.setVisibility(View.VISIBLE);
 
+                                    }
+
+                                    db.adicionaCaptura("", validacaoDTO.getStatus(), ts, eventoCfg);
+
+                                }, error -> Log.e(MainActivity.class.getName(), error.getMessage()));
+
+                                queue.add(stringRequest);
+
+                            } else {
+
+                                RetornoValidacao emissor = pega_emissor(document);
+
+                                if (emissor.getErro()) {
+
+                                    barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                    Long tsLong = System.currentTimeMillis() / 1000;
+                                    String ts = tsLong.toString();
+                                    db.adicionaCaptura(document, emissor.getErro(), ts, eventoCfg);
+                                    barcodeValue.setText(emissor.getResultado());
+                                    prox.setVisibility(View.VISIBLE);
+
+                                } else {
+
+                                    String emissor_chave = emissor.getResultado().concat("_chave");
+                                    String emissor_crl = emissor.getResultado().concat("_crl");
+
+                                    chavepublicaOrigem = sharedPref.getString(emissor_chave, "");
+                                    crlOrigem = sharedPref.getString(emissor_crl, "");
+
+                                    RetornoValidacao resultado_valida = certificadoService.validaCertificado(document, chavepublicaOrigem, crlOrigem);
+
+                                    if (resultado_valida.getErro()) {
+
+                                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                        prox.setVisibility(View.VISIBLE);
+
+                                    } else {
+
+                                        barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+
+                                        if (verificaSinalDados()) {
+
+                                            String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(document) + "/image.jpg";
+                                            downloadImagem(urlimagem);
+
                                         } else {
-
-                                            barcodeValue.setTextColor(Color.rgb(0, 255, 0));
-
-                                            if (verifica_sinal_dados()) {
-
-                                                String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(document) + "/image.jpg";
-                                                downloadImagem(urlimagem);
-                                                //dialogo_aviso(MD5(docum));
-
-                                            } else {
-                                                prox.setVisibility(View.VISIBLE);
-                                            }
-
+                                            prox.setVisibility(View.VISIBLE);
                                         }
 
-                                        Long tsLong = System.currentTimeMillis() / 1000;
-                                        String ts = tsLong.toString();
-                                        db.adicionaCaptura(document, resultado_valida.erro, ts, evento_cfg);
-                                        barcodeValue.setText(resultado_valida.resultado);
-
                                     }
+
+                                    Long tsLong = System.currentTimeMillis() / 1000;
+                                    String ts = tsLong.toString();
+                                    db.adicionaCaptura(document, resultado_valida.getErro(), ts, eventoCfg);
+                                    barcodeValue.setText(resultado_valida.getResultado());
 
                                 }
 
                             }
-
                         });
                     }
                 }
@@ -506,7 +467,7 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
 
         super.onResume();
-        registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
+        registerReceiver(networkStateReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
     }
 
@@ -516,65 +477,35 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-    //checa e solicita permissoes de acesso
+    //Checa e solicita permissoes de acesso
     private boolean checkAndRequestPermissions() {
 
-        int camera = ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA);
+        int camera = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
         int intern = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
         int acl = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-        int rps = ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
-        int ans = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_NETWORK_STATE);
-        int aws = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_WIFI_STATE);
+        int rps = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE);
+        int ans = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE);
+        int aws = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_WIFI_STATE);
         List<String> listPermissionsNeeded = new ArrayList<>();
 
-        if (camera != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(android.Manifest.permission.CAMERA);
-        }
-        if (intern != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(android.Manifest.permission.INTERNET);
-        }
-        if (rps != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(android.Manifest.permission.READ_PHONE_STATE);
-        }
-        if (ans != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(android.Manifest.permission.ACCESS_NETWORK_STATE);
-        }
-        if (aws != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(android.Manifest.permission.ACCESS_WIFI_STATE);
-        }
-        if (acl != PackageManager.PERMISSION_GRANTED) {
+        if (camera != PackageManager.PERMISSION_GRANTED)
+            listPermissionsNeeded.add(Manifest.permission.CAMERA);
+        if (intern != PackageManager.PERMISSION_GRANTED)
+            listPermissionsNeeded.add(Manifest.permission.INTERNET);
+        if (rps != PackageManager.PERMISSION_GRANTED)
+            listPermissionsNeeded.add(Manifest.permission.READ_PHONE_STATE);
+        if (ans != PackageManager.PERMISSION_GRANTED)
+            listPermissionsNeeded.add(Manifest.permission.ACCESS_NETWORK_STATE);
+        if (aws != PackageManager.PERMISSION_GRANTED)
+            listPermissionsNeeded.add(Manifest.permission.ACCESS_WIFI_STATE);
+        if (acl != PackageManager.PERMISSION_GRANTED)
             listPermissionsNeeded.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-        }
 
         if (!listPermissionsNeeded.isEmpty()) {
             ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), 1);
             return checkAndRequestPermissions();
         }
-
         return true;
-
-    }
-
-    public String UTF(String str) {
-
-        try {
-
-            return new String(str.getBytes("ISO-8859-1"), "UTF-8");
-
-
-        } catch (UnsupportedEncodingException e) {
-
-            e.printStackTrace();
-        }
-
-        return str;
-
-    }
-
-    private class RetornoValidacao {
-
-        private String resultado;
-        private boolean erro;
 
     }
 
@@ -590,8 +521,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-
-            if (verifica_sinal_dados()) {
+            if (verificaSinalDados()) {
 
                 pega_chaves_nv();
                 conectado.setText("");
@@ -605,11 +535,10 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-
     };
 
     //verifica se tem sinal de dados
-    public boolean verifica_sinal_dados() {
+    public boolean verificaSinalDados() {
 
         try {
 
@@ -617,21 +546,19 @@ public class MainActivity extends AppCompatActivity {
             if (rcl == PackageManager.PERMISSION_GRANTED) {
 
                 ConnectivityManager conMgr = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-                if (conMgr != null) {
+                if (conMgr != null)
                     return (conMgr.getActiveNetworkInfo().isAvailable() && conMgr.getActiveNetworkInfo().isConnected());
-                }
 
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return false;
 
     }
 
-    public void dialogo_aviso(String aviso) {
+    public void dialogoAviso(String aviso) {
 
         if (alerta != null) {
             alerta.dismiss();
@@ -659,38 +586,42 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void dialogo_cpf(View view) {
+    public void dialogoCpf(View view) {
 
-        if (alerta != null) {
+        if (alerta != null)
             alerta.dismiss();
-        }
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        final EditText et = new EditText(this);
-        et.setInputType(InputType.TYPE_CLASS_NUMBER);
-        et.setHint("Informe o CPF do estudante");
-        et.getBackground().mutate().setColorFilter(getResources().getColor(R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
+        alertDialogBuilder.setTitle("Validar CPF do Estudante");
 
-        alertDialogBuilder.setView(et);
+        EditText editText = new EditText(this);
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+        editText.setHint("Informe o CPF do Estudante");
+        editText.getBackground().mutate()
+                .setColorFilter(getResources().getColor(
+                        R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
+
+        alertDialogBuilder.setView(editText);
 
         int paddingPixel = 20;
         float density = this.getResources().getDisplayMetrics().density;
         int paddingDp = (int) (paddingPixel * density);
-        et.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
+        editText.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
 
-        alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
+        alertDialogBuilder.setNegativeButton(R.string.dialog_cancel, (dialog, which) -> {
+        });
 
-                String retorno = et.getText().toString();
-                if (CpfUtil.isValid(retorno)) {
-                    valida_cpf(retorno);
-                } else {
-                    if (retorno.length() > 0) {
-                        dialogo_aviso("CPF inválido");
-                    }
-                }
+        alertDialogBuilder.setPositiveButton(R.string.dialog_ok, (dialog, id) -> {
+
+            String retorno = editText.getText().toString();
+            if (CpfUtil.isValid(retorno))
+                validaCpf(retorno);
+            else {
+                if (retorno.length() > 0)
+                    dialogoAviso("CPF inválido");
 
             }
+
         });
 
         alerta = alertDialogBuilder.create();
@@ -743,6 +674,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle("Evento");
         final EditText et = new EditText(this);
         et.setHint("Informe o nome do evento");
         et.getBackground().mutate().setColorFilter(getResources().getColor(R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
@@ -754,20 +686,19 @@ public class MainActivity extends AppCompatActivity {
         int paddingDp = (int) (paddingPixel * density);
         et.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
 
-        alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
+        alertDialogBuilder.setNegativeButton(R.string.dialog_cancel, (dialog, which) -> {
+        });
 
-                String retorno = et.getText().toString();
+        alertDialogBuilder.setPositiveButton(R.string.dialog_ok, (dialog, which) -> {
+            String retorno = et.getText().toString();
 
-                if (!retorno.isEmpty()) {
+            if (!retorno.isEmpty()) {
 
-                    evento.setText(et.getText().toString());
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putString("evento", retorno);
-                    editor.apply();
-                    evento_cfg = sharedPref.getString("evento", "");
-
-                }
+                evento.setText(et.getText().toString());
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("evento", retorno);
+                editor.apply();
+                eventoCfg = sharedPref.getString("evento", "");
 
             }
         });
@@ -777,7 +708,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void dialogo_codigo(View view) {
+    public void dialogoCodigo(View view) {
 
         if (alerta != null)
             alerta.dismiss();
@@ -808,7 +739,7 @@ public class MainActivity extends AppCompatActivity {
                 SharedPreferences.Editor editor = sharedPref.edit();
                 editor.putString("codigo", codigoAcesso);
 
-                codigo_cfg = sharedPref.getString("codigo", "");
+                codigoCfg = sharedPref.getString("codigo", "");
 
                 String endpoint = GlobalConstants.URL_VALIDATE_OPERADOR + "/" + codigoAcesso;
                 JsonObjectRequest request = new JsonObjectRequest(
@@ -881,17 +812,17 @@ public class MainActivity extends AppCompatActivity {
 
 
     // proximo qr_code
-    public void proximo_qrcode(View view) {
+    public void proximoQrcode(View view) {
 
         barcodeValue.setText("");
         barcodeValue.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
         foto.setVisibility(View.GONE);
         prox.setVisibility(View.GONE);
         cameraView.setVisibility(View.VISIBLE);
-        fab_evento.setVisibility(View.VISIBLE);
-        fab_codigo_acesso.setVisibility(View.VISIBLE);
+        fabEvento.setVisibility(View.VISIBLE);
+        fabCodigoAcesso.setVisibility(View.VISIBLE);
         evento.setVisibility(View.VISIBLE);
-        fab_cpf.setVisibility(View.VISIBLE);
+        fabCpf.setVisibility(View.VISIBLE);
 
         try {
 
@@ -907,22 +838,17 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void validarCiePor(String codigoUso, Long dataNascimento) {
+    public void validaCpf(final String cpfe) {
 
-
-    }
-
-    public void valida_cpf(final String cpfe) {
-
-        if (verifica_sinal_dados()) {
+        if (verificaSinalDados()) {
 
             fotop.setVisibility(View.VISIBLE);
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            fab_evento.setVisibility(View.GONE);
-            fab_codigo_acesso.setVisibility(View.GONE);
-            fab_cpf.setVisibility(View.GONE);
+            fabEvento.setVisibility(View.GONE);
+            fabCodigoAcesso.setVisibility(View.GONE);
+            fabCpf.setVisibility(View.GONE);
             evento.setVisibility(View.GONE);
 
             ConstraintSet set = new ConstraintSet();
@@ -958,7 +884,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     barcodeValue.setTextColor(Color.rgb(255, 0, 0));
                                     String msgerro = obj.getString("msg");
-                                    barcodeValue.setText("\n".concat(UTF(msgerro)).concat("\n"));
+                                    barcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
                                     prox.setVisibility(View.VISIBLE);
 
                                 }
@@ -991,7 +917,7 @@ public class MainActivity extends AppCompatActivity {
                 public Map<String, String> getHeaders() throws AuthFailureError {
                     Map<String, String> params = new HashMap<>();
                     params.put("cpff", cpfe);
-                    params.put("codigoAcesso", codigo_cfg);
+                    params.put("codigoAcesso", codigoCfg);
 
                     return params;
                 }
@@ -1002,7 +928,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         } else {
-            dialogo_aviso("Sem conectividade");
+            dialogoAviso("Sem conectividade");
         }
 
     }
@@ -1025,7 +951,7 @@ public class MainActivity extends AppCompatActivity {
                 params.put("latitude", proxi.getLatitude());
                 params.put("longitude", proxi.getLongitude());
                 params.put("idDispositivo", proxi.getIdDispositivo());
-                params.put("codigoAcesso", codigo_cfg);
+                params.put("codigoAcesso", codigoCfg);
 
                 JsonObjectRequest postRequest = new JsonObjectRequest(GlobalConstants.URL_CAPTURAS, new JSONObject(params),
                         new Response.Listener<JSONObject>() {
@@ -1043,7 +969,7 @@ public class MainActivity extends AppCompatActivity {
                                     } else {
 
                                         String msgerro = response.getString("msg");
-                                        dialogo_aviso(msgerro);
+                                        dialogoAviso(msgerro);
 
                                     }
 
@@ -1129,8 +1055,8 @@ public class MainActivity extends AppCompatActivity {
     RetornoValidacao pega_emissor(String certDNE) {
 
         RetornoValidacao retornove = new RetornoValidacao();
-        retornove.resultado = GlobalConstants.ERRO_INVALIDO;
-        retornove.erro = true;
+        retornove.setResultado(GlobalConstants.ERRO_INVALIDO);
+        retornove.setErro(true);
 
         try {
 
@@ -1146,73 +1072,12 @@ public class MainActivity extends AppCompatActivity {
             Integer indice2 = nomefull.indexOf("CN=");
             nomefull = nomefull.substring(indice1 + 3, indice2 - 1);
             nomefull = nomefull.replaceAll("\\s+", "");
-            retornove.resultado = nomefull;
-            retornove.erro = false;
+            retornove.setResultado(nomefull);
+            retornove.setErro(false);
             return retornove;
 
         } catch (Exception e) {
             return retornove;
-        }
-
-    }
-
-    // executa validacao  do certificado localmente ( chave publica e CRl sao mandatorias, mesmo que a CRL nao tenha certif. revogados )
-    RetornoValidacao valida_certificado(String certDNE, String chavepublica, String crl) {
-
-        RetornoValidacao retornov = new RetornoValidacao();
-        retornov.resultado = GlobalConstants.ERRO_INVALIDO;
-        retornov.erro = true;
-
-        try {
-            if (!chavepublica.isEmpty() && !crl.isEmpty()) {
-                Security.addProvider(new BouncyCastleProvider());
-                X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.decode(chavepublica));
-                KeyFactory kf = KeyFactory.getInstance("RSA");
-                RSAPublicKey chapub = (RSAPublicKey) kf.generatePublic(keySpecX509);
-                certDNE = "-----BEGIN ATTRIBUTE CERTIFICATE-----\n" + certDNE + "\n-----END ATTRIBUTE CERTIFICATE-----";
-                PEMParser pemattr = new PEMParser(new StringReader(certDNE));
-                Object objattr2 = pemattr.readObject();
-                pemattr.close();
-                X509AttributeCertificateHolder attr2 = (X509AttributeCertificateHolder) objattr2;
-                crl = "-----BEGIN X509 CRL-----\n" + crl + "\n-----END X509 CRL-----";
-                PEMParser pemacrl = new PEMParser(new StringReader(crl));
-                Object objcrl = pemacrl.readObject();
-                pemacrl.close();
-                X509CRLHolder jceCRL = (X509CRLHolder) objcrl;
-                if (jceCRL.isSignatureValid(new JcaContentVerifierProviderBuilder().setProvider("BC").build(chapub))) {
-                    if (attr2.isSignatureValid(new JcaContentVerifierProviderBuilder().setProvider("BC").build(chapub))) {
-                        if (attr2.isValidOn(new Date())) {
-                            AttributeCertificateHolder h = attr2.getHolder();
-                            X500Name[] nomex = h.getIssuer();
-                            String nomefull = nomex[0] + "";
-                            Integer indicenome = nomefull.indexOf("CN=");
-                            nomefull = nomefull.substring(indicenome + 3, nomefull.length());
-                            retornov.resultado = "\n" + nomefull + "\n";
-                            retornov.erro = false;
-                            Attribute[] attribs = attr2.getAttributes();
-                            Attribute a = attribs[0];
-                            String apar = a.getAttrValues() + "";
-                            retornov.resultado = retornov.resultado.concat("CPF: " + apar.substring(9, 20) + GlobalConstants.DOC_VALIDO);
-                            JcaX509CRLConverter converter = new JcaX509CRLConverter();
-                            converter.setProvider("BC");
-                            X509CRL crlconv = converter.getCRL(jceCRL);
-                            X509CRLEntry xentry = crlconv.getRevokedCertificate(attr2.getSerialNumber());
-                            if (xentry != null) {
-                                retornov.resultado = GlobalConstants.ERRO_REVOGADO;
-                                retornov.erro = true;
-                            }
-
-                        } else {
-                            retornov.resultado = GlobalConstants.ERRO_EXPIRADO;
-                            retornov.erro = true;
-                        }
-                    }
-                }
-            }
-            return retornov;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return retornov;
         }
 
     }
@@ -1230,7 +1095,7 @@ public class MainActivity extends AppCompatActivity {
                 .memoryPolicy(MemoryPolicy.NO_CACHE)
                 .networkPolicy(NetworkPolicy.NO_CACHE)
                 .resize(widths, 0)
-                .into(foto, new com.squareup.picasso.Callback() {
+                .into(foto, new Callback() {
                     @Override
                     public void onSuccess() {
 
@@ -1306,7 +1171,7 @@ public class MainActivity extends AppCompatActivity {
             dbx.insert("capturas", null, values);
             dbx.close();
 
-            if (verifica_sinal_dados()) {
+            if (verificaSinalDados()) {
                 manda_captura();
             }
 

@@ -4,7 +4,8 @@
     <color name="colorPrimaryDark">#dc303f9f</color>
     <color name="colorAccent">#e41d1d</color>
 
-
     <color name="fab_font_color">#FFFF</color>
     <color name="fab_background_color">#bb161515</color>
+    <color name="iconFontWhite">#FFFFFF</color>
+
 </resources>

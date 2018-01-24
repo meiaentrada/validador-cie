@@ -1,4 +1,4 @@
-package br.org.meiaentrada.validadorcie.entity;
+package br.org.meiaentrada.validadorcie.model;
 
 
 public class ValidacaoDTO {

@@ -9,7 +9,6 @@
     android:background="@android:color/black"
     tools:context="br.org.meiaentrada.validadorcie.MainActivity">
 
-
     <SurfaceView
         android:id="@+id/camera"
         android:layout_width="match_parent"
@@ -24,7 +23,6 @@
         app:layout_constraintTop_toTopOf="@+id/resultado"
         app:layout_constraintVertical_bias="0.0" />
 
-
     <ImageView
         android:id="@+id/foto"
         android:layout_width="wrap_content"
@@ -34,7 +32,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
 
     <TextView
         android:id="@+id/resultado"
@@ -80,15 +77,20 @@
         app:layout_constraintLeft_toRightOf="parent"
         android:layout_marginStart="3dp" />
 
-    <!--<Button-->
-        <!--android:id="@+id/codigo_uso_dt_nascimento"-->
-        <!--android:layout_width="48dp"-->
-        <!--android:layout_height="48dp"-->
-        <!--android:layout_marginBottom="8dp"-->
-        <!--android:background="@drawable/cpf"-->
-        <!--android:onClick="dialogoValidacaoCasoUsoDataNascimento"-->
-        <!--app:layout_constraintBottom_toTopOf="@+id/cpf_definir"-->
-        <!--app:layout_constraintStart_toStartOf="parent" />-->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/codigo_uso_dt_nascimento"
+        android:layout_width="@dimen/fab_item_menu"
+        android:layout_height="@dimen/fab_item_menu"
+        android:layout_marginBottom="8dp"
+        android:layout_marginRight="8dp"
+        app:fabSize="normal"
+        android:layout_marginLeft="8dp"
+        android:src="@drawable/ic_action_name"
+        android:scaleType="center"
+        android:onClick="dialogoValidacaoCasoUsoDataNascimento"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/cpf_definir"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/cpf_definir"
@@ -96,13 +98,16 @@
         android:layout_height="@dimen/fab_item_menu"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
-        android:onClick="dialogo_cpf"
-        android:scaleType="center"
+        android:layout_marginRight="8dp"
+        app:fabSize="normal"
+        android:layout_marginLeft="8dp"
         android:src="@drawable/ic_cpf"
+        android:scaleType="center"
+        android:onClick="dialogoCpf"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/evento_definir"
-        app:layout_constraintEnd_toEndOf="parent" />
-
+        app:layout_constraintEnd_toEndOf="parent"
+        android:tint="@color/iconFontWhite" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/evento_definir"
@@ -118,12 +123,11 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginRight="8dp" />
 
-
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/codigo_definir"
         android:layout_width="@dimen/fab_item_menu"
         android:layout_height="@dimen/fab_item_menu"
-        android:onClick="dialogo_codigo"
+        android:onClick="dialogoCodigo"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginLeft="0dp"
@@ -157,7 +161,7 @@
         android:layout_marginStart="8dp"
         android:scaleType="center"
         android:src="@drawable/ic_ok"
-        android:onClick="proximo_qrcode"
+        android:onClick="proximoQrcode"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
