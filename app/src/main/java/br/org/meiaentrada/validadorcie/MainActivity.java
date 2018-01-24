@@ -3,7 +3,6 @@ package br.org.meiaentrada.validadorcie;
 import java.util.Map;
 import java.util.HashMap;
 
-import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -17,7 +16,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.util.Log;
-import android.widget.Button;
 import android.widget.EditText;
 import android.net.ConnectivityManager;
 import android.widget.ImageView;
@@ -28,9 +26,7 @@ import android.os.Bundle;
 import com.android.volley.RequestQueue;
 import com.android.volley.Request;
 import com.android.volley.toolbox.Volley;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.Response;
 
 import android.content.SharedPreferences;
 
@@ -377,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
 
                             } else {
 
-                                RetornoValidacao emissor = pega_emissor(document);
+                                RetornoValidacao emissor = pegaEmissor(document);
 
                                 if (emissor.getErro()) {
 
@@ -529,7 +525,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (verificaSinalDados()) {
 
-                pega_chaves_nv();
+                pegaChavesNv();
                 conectado.setText("");
 
             } else {
@@ -854,71 +850,63 @@ public class MainActivity extends AppCompatActivity {
 
             RequestQueue queue = Volley.newRequestQueue(this);
             StringRequest postRequest = new StringRequest(Request.Method.GET, GlobalConstants.URL_CPF,
-                    new Response.Listener<String>() {
+                    response -> {
 
-                        @Override
-                        public void onResponse(String response) {
+                        fotop.setVisibility(View.GONE);
 
-                            fotop.setVisibility(View.GONE);
+                        try {
 
-                            try {
+                            JSONObject obj = new JSONObject(response);
 
-                                JSONObject obj = new JSONObject(response);
+                            Boolean retorno = obj.getBoolean("status");
 
-                                Boolean retorno = obj.getBoolean("status");
+                            if (retorno) {
 
-                                if (retorno) {
+                                barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                downloadImagem(obj.getString("foto"));
+                                barcodeValue.setText(GlobalConstants.DOC_VALIDO);
 
-                                    barcodeValue.setTextColor(Color.rgb(0, 255, 0));
-                                    downloadImagem(obj.getString("foto"));
-                                    barcodeValue.setText(GlobalConstants.DOC_VALIDO);
+                            } else {
 
-                                } else {
-
-                                    barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                                    String msgerro = obj.getString("msg");
-                                    barcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
-                                    prox.setVisibility(View.VISIBLE);
-
-                                }
-
-                            } catch (Exception e) {
-
-                                e.printStackTrace();
-                                fotop.setVisibility(View.GONE);
                                 barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                                barcodeValue.setText("\nErro de conectividade, tente novamente\n");
+                                String msgerro = obj.getString("msg");
+                                barcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
                                 prox.setVisibility(View.VISIBLE);
 
                             }
 
-                        }
-                    },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
+                        } catch (Exception e) {
 
+                            e.printStackTrace();
                             fotop.setVisibility(View.GONE);
                             barcodeValue.setTextColor(Color.rgb(255, 0, 0));
                             barcodeValue.setText("\nErro de conectividade, tente novamente\n");
                             prox.setVisibility(View.VISIBLE);
 
                         }
+                    },
+                    error -> {
+
+                        fotop.setVisibility(View.GONE);
+                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                        barcodeValue.setText("\nErro de conectividade, tente novamente\n");
+                        prox.setVisibility(View.VISIBLE);
+
                     }
             ) {
+
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
                     Map<String, String> params = new HashMap<>();
-                    params.put("cpff", cpfe);
+                    params.put("cpf", cpfe);
                     params.put("codigoAcesso", codigoCfg);
 
                     return params;
                 }
+
             };
 
-
             queue.add(postRequest);
-
 
         } else {
             dialogoAviso("Sem conectividade");
@@ -927,12 +915,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // envia captura  para o servidor
-    public void manda_captura() {
+    public void mandaCaptura() {
 
         try {
 
-            final ItemCaptura proxi;
-            proxi = db.retornaProximo();
+            final ItemCaptura proxi = db.retornaProximo();
             if (!proxi.getId().equals("")) {
 
                 RequestQueue queue = Volley.newRequestQueue(this);
@@ -947,105 +934,85 @@ public class MainActivity extends AppCompatActivity {
                 params.put("codigoAcesso", codigoCfg);
 
                 JsonObjectRequest postRequest = new JsonObjectRequest(GlobalConstants.URL_CAPTURAS, new JSONObject(params),
-                        new Response.Listener<JSONObject>() {
-                            @Override
-                            public void onResponse(JSONObject response) {
-                                try {
+                        response -> {
+                            try {
 
-                                    Boolean retorno = response.getBoolean("status");
+                                Boolean retorno = response.getBoolean("status");
+                                if (retorno) {
 
-                                    if (retorno) {
+                                    db.deletaItem(proxi.getId());
+                                    mandaCaptura();
 
-                                        db.deletaItem(proxi.getId());
-                                        manda_captura();
+                                } else {
 
-                                    } else {
+                                    String msgerro = response.getString("msg");
+                                    dialogoAviso(msgerro);
 
-                                        String msgerro = response.getString("msg");
-                                        dialogoAviso(msgerro);
-
-                                    }
-
-                                } catch (Exception e) {
-                                    e.printStackTrace();
                                 }
+
+                            } catch (Exception e) {
+                                Log.e(MainActivity.class.getName(), e.getMessage());
                             }
-                        }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-
-                        error.printStackTrace();
-
-                    }
-                });
+                        },
+                        error -> Log.e(MainActivity.class.getName(), error.getMessage()));
 
                 queue.add(postRequest);
 
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(MainActivity.class.getName(), e.getMessage());
         }
 
     }
 
     // busca chaves publicas e CRLs no meiaentrada.org.br
-    public void pega_chaves_nv() {
+    public void pegaChavesNv() {
 
         RequestQueue queue = Volley.newRequestQueue(this);
         StringRequest stringRequest = new StringRequest(Request.Method.GET, GlobalConstants.URL_CHAVES,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
+                response -> {
 
-                        try {
+                    try {
 
-                            JSONObject jsonObject = new JSONObject(response);
+                        JSONObject jsonObject = new JSONObject(response);
 
-                            JSONArray retorno = jsonObject.getJSONArray("retorno");
+                        JSONArray retorno = jsonObject.getJSONArray("retorno");
 
-                            for (int i = 0; i < retorno.length(); i++) {
-                                try {
+                        for (int i = 0; i < retorno.length(); i++) {
+                            try {
 
-                                    JSONObject oneObject = retorno.getJSONObject(i);
-                                    String json_emissor = stripAccents(oneObject.getString("emissor")).replaceAll("\\p{Z}", "").replaceAll("-", "");
-                                    String json_chavepublica = oneObject.getString("chavePublica");
-                                    String json_crl = oneObject.getString("crl");
-                                    SharedPreferences.Editor editor = sharedPref.edit();
-                                    editor.putString(json_emissor + "_chave", json_chavepublica);
-                                    editor.putString(json_emissor + "_crl", json_crl);
-                                    editor.apply();
+                                JSONObject oneObject = retorno.getJSONObject(i);
+                                String json_emissor = stripAccents(oneObject.getString("emissor")).replaceAll("\\p{Z}", "").replaceAll("-", "");
+                                String json_chavepublica = oneObject.getString("chavePublica");
+                                String json_crl = oneObject.getString("crl");
+                                SharedPreferences.Editor editor = sharedPref.edit();
+                                editor.putString(json_emissor + "_chave", json_chavepublica);
+                                editor.putString(json_emissor + "_crl", json_crl);
+                                editor.apply();
 
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
-
-                            if (db.totalCapturas() > 0) {
-                                manda_captura();
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
                         }
 
+                        if (db.totalCapturas() > 0) {
+                            mandaCaptura();
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
 
-                }, new Response.ErrorListener() {
-
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                error.printStackTrace();
-            }
-        });
+                },
+                error -> Log.e(MainActivity.class.getName(), error.getMessage()));
 
         queue.add(stringRequest);
 
     }
 
     // busca emissor dentro do certificado
-    RetornoValidacao pega_emissor(String certDNE) {
+    RetornoValidacao pegaEmissor(String certDNE) {
 
         RetornoValidacao retornove = new RetornoValidacao();
         retornove.setResultado(GlobalConstants.ERRO_INVALIDO);
@@ -1165,7 +1132,7 @@ public class MainActivity extends AppCompatActivity {
             dbx.close();
 
             if (verificaSinalDados()) {
-                manda_captura();
+                mandaCaptura();
             }
 
         }
