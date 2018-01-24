@@ -339,14 +339,14 @@ public class MainActivity extends AppCompatActivity {
                                         barcodeValue.setTextColor(Color.rgb(0, 255, 0));
                                         barcodeValue.setText("Documento Valido!");
 
-                                        if (verifica_sinal_dados())
+                                        if (verificaSinalDados())
                                             downloadImagem(validacaoDTO.getFoto());
                                         else
                                             prox.setVisibility(View.VISIBLE);
 
                                     }
 
-                                    db.adicionaCaptura("", validacaoDTO.getStatus(), ts, evento);
+                                    db.adicionaCaptura("", validacaoDTO.getStatus(), ts, eventoCfg);
 
                                 }, error -> Log.e(MainActivity.class.getName(), error.getMessage()));
 
@@ -384,11 +384,10 @@ public class MainActivity extends AppCompatActivity {
 
                                         barcodeValue.setTextColor(Color.rgb(0, 255, 0));
 
-                                        if (verifica_sinal_dados()) {
+                                        if (verificaSinalDados()) {
 
                                             String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(document) + "/image.jpg";
                                             downloadImagem(urlimagem);
-                                            //dialogo_aviso(MD5(docum));
 
                                         } else {
                                             prox.setVisibility(View.VISIBLE);
@@ -461,7 +460,7 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-    //checa e solicita permissoes de acesso
+    //Checa e solicita permissoes de acesso
     private boolean checkAndRequestPermissions() {
 
         int camera = ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA);
@@ -493,7 +492,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
     // remove acentos de uma string
     public static String stripAccents(String input) {
         return input == null ? null :
@@ -506,8 +504,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-
-            if (verifica_sinal_dados()) {
+            if (verificaSinalDados()) {
 
                 pega_chaves_nv();
                 conectado.setText("");
@@ -521,11 +518,10 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-
     };
 
     //verifica se tem sinal de dados
-    public boolean verifica_sinal_dados() {
+    public boolean verificaSinalDados() {
 
         try {
 
@@ -533,21 +529,19 @@ public class MainActivity extends AppCompatActivity {
             if (rcl == PackageManager.PERMISSION_GRANTED) {
 
                 ConnectivityManager conMgr = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-                if (conMgr != null) {
+                if (conMgr != null)
                     return (conMgr.getActiveNetworkInfo().isAvailable() && conMgr.getActiveNetworkInfo().isConnected());
-                }
 
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return false;
 
     }
 
-    public void dialogo_aviso(String aviso) {
+    public void dialogoAviso(String aviso) {
 
         if (alerta != null) {
             alerta.dismiss();
@@ -575,38 +569,42 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void dialogo_cpf(View view) {
+    public void dialogoCpf(View view) {
 
-        if (alerta != null) {
+        if (alerta != null)
             alerta.dismiss();
-        }
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        final EditText et = new EditText(this);
-        et.setInputType(InputType.TYPE_CLASS_NUMBER);
-        et.setHint("Informe o CPF do estudante");
-        et.getBackground().mutate().setColorFilter(getResources().getColor(R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
+        alertDialogBuilder.setTitle("Validar CPF do Estudante");
 
-        alertDialogBuilder.setView(et);
+        EditText editText = new EditText(this);
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+        editText.setHint("Informe o CPF do Estudante");
+        editText.getBackground().mutate()
+                .setColorFilter(getResources().getColor(
+                        R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
+
+        alertDialogBuilder.setView(editText);
 
         int paddingPixel = 20;
         float density = this.getResources().getDisplayMetrics().density;
         int paddingDp = (int) (paddingPixel * density);
-        et.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
+        editText.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
 
-        alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
+        alertDialogBuilder.setNegativeButton(R.string.dialog_cancel, (dialog, which) -> {
+        });
 
-                String retorno = et.getText().toString();
-                if (CpfUtil.isValid(retorno)) {
-                    valida_cpf(retorno);
-                } else {
-                    if (retorno.length() > 0) {
-                        dialogo_aviso("CPF inválido");
-                    }
-                }
+        alertDialogBuilder.setPositiveButton(R.string.dialog_ok, (dialog, id) -> {
+
+            String retorno = editText.getText().toString();
+            if (CpfUtil.isValid(retorno))
+                validaCpf(retorno);
+            else {
+                if (retorno.length() > 0)
+                    dialogoAviso("CPF inválido");
 
             }
+
         });
 
         alerta = alertDialogBuilder.create();
@@ -659,6 +657,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle("Evento");
         final EditText et = new EditText(this);
         et.setHint("Informe o nome do evento");
         et.getBackground().mutate().setColorFilter(getResources().getColor(R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
@@ -670,20 +669,19 @@ public class MainActivity extends AppCompatActivity {
         int paddingDp = (int) (paddingPixel * density);
         et.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
 
-        alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
+        alertDialogBuilder.setNegativeButton(R.string.dialog_cancel, (dialog, which) -> {
+        });
 
-                String retorno = et.getText().toString();
+        alertDialogBuilder.setPositiveButton(R.string.dialog_ok, (dialog, which) -> {
+            String retorno = et.getText().toString();
 
-                if (!retorno.isEmpty()) {
+            if (!retorno.isEmpty()) {
 
-                    evento.setText(et.getText().toString());
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putString("evento", retorno);
-                    editor.apply();
-                    eventoCfg = sharedPref.getString("evento", "");
-
-                }
+                evento.setText(et.getText().toString());
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("evento", retorno);
+                editor.apply();
+                eventoCfg = sharedPref.getString("evento", "");
 
             }
         });
@@ -693,7 +691,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void dialogo_codigo(View view) {
+    public void dialogoCodigo(View view) {
 
         if (alerta != null)
             alerta.dismiss();
@@ -797,7 +795,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     // proximo qr_code
-    public void proximo_qrcode(View view) {
+    public void proximoQrcode(View view) {
 
         barcodeValue.setText("");
         barcodeValue.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
@@ -823,14 +821,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void validarCiePor(String codigoUso, Long dataNascimento) {
+    public void validaCpf(final String cpfe) {
 
-
-    }
-
-    public void valida_cpf(final String cpfe) {
-
-        if (verifica_sinal_dados()) {
+        if (verificaSinalDados()) {
 
             fotop.setVisibility(View.VISIBLE);
 
@@ -918,7 +911,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         } else {
-            dialogo_aviso("Sem conectividade");
+            dialogoAviso("Sem conectividade");
         }
 
     }
@@ -959,7 +952,7 @@ public class MainActivity extends AppCompatActivity {
                                     } else {
 
                                         String msgerro = response.getString("msg");
-                                        dialogo_aviso(msgerro);
+                                        dialogoAviso(msgerro);
 
                                     }
 
@@ -1161,7 +1154,7 @@ public class MainActivity extends AppCompatActivity {
             dbx.insert("capturas", null, values);
             dbx.close();
 
-            if (verifica_sinal_dados()) {
+            if (verificaSinalDados()) {
                 manda_captura();
             }
 
