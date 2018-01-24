@@ -1,4 +1,5 @@
 <resources>
-    <dimen name="fab_margin_right">16dp</dimen>
     <!--<dimen name="fab_margin_right">16dp</dimen>-->
+    <!--<dimen name="fab_margin_right">16dp</dimen>-->
+    <dimen name="fab_item_menu">56dp</dimen>
 </resources>

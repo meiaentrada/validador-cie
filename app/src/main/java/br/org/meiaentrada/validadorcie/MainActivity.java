@@ -96,8 +96,6 @@ import android.support.v4.content.ContextCompat;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.widget.Button;
-
 import com.android.volley.toolbox.JsonObjectRequest;
 
 import android.support.constraint.ConstraintSet;
@@ -140,10 +138,10 @@ public class MainActivity extends AppCompatActivity {
     private String crl_origem;
     private String chavepublica_origem;
     private ImageView foto;
-    private Button prox;
-    private Button eventod;
-    private Button codigod;
-    private Button cpfd;
+    private FloatingActionButton prox;
+    private FloatingActionButton fab_evento;
+    private FloatingActionButton fab_codigo_acesso;
+    private FloatingActionButton fab_cpf;
     private ConstraintLayout layout1;
     public AlertDialog alerta;
     LocationManager locationManager;
@@ -154,8 +152,8 @@ public class MainActivity extends AppCompatActivity {
     String longitude;
     String androidId;
 
-    FloatingActionButton fab_principal, fab_item_1, fab_item_2;
-    Animation fab_open, fab_close, fab_rotate_clock, fab_rotate_anti_clock;
+    FloatingActionButton fab_menu;
+    Animation anim_fab_open, anim_fab_close, anim_fab_rotate_clock, anim_fab_rotate_anti_clock;
 
     boolean isOpen = false;
 
@@ -172,9 +170,6 @@ public class MainActivity extends AppCompatActivity {
         barcodeValue = findViewById(R.id.resultado);
         prox = findViewById(R.id.proximo);
         prox.setVisibility(View.GONE);
-        eventod = findViewById(R.id.evento_definir);
-        codigod = findViewById(R.id.codigo_definir);
-        cpfd = findViewById(R.id.cpf_definir);
         foto = findViewById(R.id.foto);
         foto.setVisibility(View.GONE);
         fotop = findViewById(R.id.fotop);
@@ -185,35 +180,47 @@ public class MainActivity extends AppCompatActivity {
         layout1 = findViewById(R.id.layout1);
         androidId = Secure.ANDROID_ID;
 
-        fab_principal = findViewById(R.id.fab);
-        fab_item_1 = findViewById(R.id.item1);
-        fab_item_2 = findViewById(R.id.item2);
+        fab_menu = findViewById(R.id.menu);
+        fab_codigo_acesso = findViewById(R.id.codigo_definir);
+        fab_cpf = findViewById(R.id.cpf_definir);
+        fab_evento = findViewById(R.id.evento_definir);
 
-        fab_open = AnimationUtils.loadAnimation(this, R.anim.fab_open);
-        fab_close = AnimationUtils.loadAnimation(this, R.anim.fab_close);
-        fab_rotate_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
-        fab_rotate_anti_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
+        anim_fab_open = AnimationUtils.loadAnimation(this, R.anim.fab_open);
+        anim_fab_close = AnimationUtils.loadAnimation(this, R.anim.fab_close);
+        anim_fab_rotate_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
+        anim_fab_rotate_anti_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
 
-        fab_principal.setOnClickListener(new View.OnClickListener() {
+        fab_menu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (isOpen){
-                    fab_item_1.startAnimation(fab_close);
-                    fab_item_2.startAnimation(fab_close);
-                    fab_principal.startAnimation(fab_rotate_anti_clock);
-                    fab_item_1.setClickable(false);
-                    fab_item_2.setClickable(false);
+                    fab_codigo_acesso.startAnimation(anim_fab_close);
+                    fab_cpf.startAnimation(anim_fab_close);
+                    fab_evento.startAnimation(anim_fab_close);
+
+                    fab_menu.startAnimation(anim_fab_rotate_anti_clock);
+
+                    fab_codigo_acesso.setClickable(false);
+                    fab_cpf.setClickable(false);
+                    fab_evento.setClickable(false);
+
                     isOpen = false;
                 }else {
-                    fab_item_1.startAnimation(fab_open);
-                    fab_item_2.startAnimation(fab_open);
-                    fab_principal.startAnimation(fab_rotate_clock);
-                    fab_item_1.setClickable(true);
-                    fab_item_2.setClickable(true);
+                    fab_codigo_acesso.startAnimation(anim_fab_open);
+                    fab_cpf.startAnimation(anim_fab_open);
+                    fab_cpf.startAnimation(anim_fab_open);
+                    fab_evento.startAnimation(anim_fab_open);
+
+                    fab_menu.startAnimation(anim_fab_rotate_clock);
+
+                    fab_codigo_acesso.setClickable(true);
+                    fab_cpf.setClickable(true);
+                    fab_evento.setClickable(true);
                     isOpen = true;
                 }
             }
         });
+
 
         if (checkAndRequestPermissions()) {
 
@@ -293,9 +300,9 @@ public class MainActivity extends AppCompatActivity {
 
                                 cameraSource.stop();
                                 cameraView.setVisibility(View.GONE);
-                                eventod.setVisibility(View.GONE);
-                                codigod.setVisibility(View.GONE);
-                                cpfd.setVisibility(View.GONE);
+                                fab_evento.setVisibility(View.GONE);
+                                fab_codigo_acesso.setVisibility(View.GONE);
+                                fab_cpf.setVisibility(View.GONE);
                                 evento.setVisibility(View.GONE);
 
                                 ConstraintSet set = new ConstraintSet();
@@ -695,10 +702,10 @@ public class MainActivity extends AppCompatActivity {
         foto.setVisibility(View.GONE);
         prox.setVisibility(View.GONE);
         cameraView.setVisibility(View.VISIBLE);
-        eventod.setVisibility(View.VISIBLE);
-        codigod.setVisibility(View.VISIBLE);
+        fab_evento.setVisibility(View.VISIBLE);
+        fab_codigo_acesso.setVisibility(View.VISIBLE);
         evento.setVisibility(View.VISIBLE);
-        cpfd.setVisibility(View.VISIBLE);
+        fab_cpf.setVisibility(View.VISIBLE);
 
         try {
 
@@ -714,7 +721,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    // validacao de documento por cpf
+    // validacao de documento por cpff
     public void valida_cpf(final String cpfe) {
 
         if (verifica_sinal_dados()) {
@@ -723,9 +730,9 @@ public class MainActivity extends AppCompatActivity {
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            eventod.setVisibility(View.GONE);
-            codigod.setVisibility(View.GONE);
-            cpfd.setVisibility(View.GONE);
+            fab_evento.setVisibility(View.GONE);
+            fab_codigo_acesso.setVisibility(View.GONE);
+            fab_cpf.setVisibility(View.GONE);
             evento.setVisibility(View.GONE);
 
             ConstraintSet set = new ConstraintSet();
@@ -793,7 +800,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
                     Map<String, String> params = new HashMap<>();
-                    params.put("cpf", cpfe);
+                    params.put("cpff", cpfe);
                     params.put("codigoAcesso", codigo_cfg);
 
                     return params;
