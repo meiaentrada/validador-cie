@@ -329,8 +329,6 @@ public class MainActivity extends AppCompatActivity {
                                 if (evento_cfg.isEmpty())
                                     evento_cfg = "Evento indefinido";
 
-                                document = "https://www.cdne.com.br/#val/8EZ7X5/dt/623901600000";
-
                                 BarcodeType barcodeType = BarcodeService.getBarcodeType(document);
 
                                 if (barcodeType == BarcodeType.CDNE_URL) {
