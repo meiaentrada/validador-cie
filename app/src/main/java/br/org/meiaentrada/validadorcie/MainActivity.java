@@ -14,6 +14,12 @@ JVM: OpenJDK 64-Bit Server VM by JetBrains s.r.o
 
 package br.org.meiaentrada.validadorcie;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -80,6 +86,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.util.encoders.Base64;
+import org.joda.time.format.DateTimeFormat;
 import org.json.*;
 
 import android.graphics.PorterDuff;
@@ -106,6 +113,7 @@ import android.location.Location;
 import android.provider.Settings.Secure;
 import android.text.InputType;
 
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.MemoryPolicy;
 import com.squareup.picasso.NetworkPolicy;
@@ -117,6 +125,9 @@ import java.io.UnsupportedEncodingException;
 
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
 import br.org.meiaentrada.validadorcie.entity.ItemCaptura;
+import br.org.meiaentrada.validadorcie.entity.ValidacaoDTO;
+import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
+import br.org.meiaentrada.validadorcie.service.BarcodeService;
 import br.org.meiaentrada.validadorcie.service.HttpService;
 import br.org.meiaentrada.validadorcie.service.ToastService;
 import br.org.meiaentrada.validadorcie.util.CpfUtil;
@@ -152,6 +163,8 @@ public class MainActivity extends AppCompatActivity {
     String latitude;
     String longitude;
     String androidId;
+
+    private Gson jsonParser = new Gson();
 
     @Override
     public void onCreate(Bundle state) {
@@ -249,43 +262,11 @@ public class MainActivity extends AppCompatActivity {
                 public void receiveDetections(Detector.Detections<Barcode> detections) {
                     final SparseArray<Barcode> barcodes = detections.getDetectedItems();
                     if (barcodes.size() != 0) {
-                        Log.e("teSTE", "äki");
                         barcodeValue.post(new Runnable() {
                             @Override
                             public void run() {
 
                                 String document = barcodes.valueAt(0).displayValue;
-
-                                document = "http://cdne.com.br/SP281357/19920419";
-
-                                if (document.contains("cdne.com.br")) {
-
-                                    document = document
-                                            .replace("http://", "")
-                                            .replace("https://", "");
-
-                                    String[][] urlsRegexPatterns = {
-                                            {"(cdne.com.br/)(.+?(?=[^A-Z]))/(\\d+)", "$2;$3"},
-                                            {"(cdne.com.br/val/)(.+?(?=[^A-Z\\d+]))/dt/(\\d+)", "$2;$3"},
-                                            {"(cdne.com.br/validador/val/)(.+?(?=[^A-Z\\d+]))/(\\d+)"},
-                                            {"cdne.com.br/validador/convenio/)(.+?(?=[^A-Z\\d+]))/(\\d+)", "$2;$3"},
-                                            {"(cdne.com.br/validador/validardne\\?numero=)((.+?(?=[^A-Z\\d+])))\\&dataNascimento=(\\d+)", "$2;$4"}
-                                    };
-
-                                    String[] fields;
-                                    for (String[] pattern : urlsRegexPatterns) {
-
-                                        fields = document.replaceAll(pattern[0], pattern[1])
-                                                .split(";");
-
-                                        if (fields.length == 2)
-                                            break;
-
-                                    }
-
-//                                    if (fields.length != 2)
-
-                                }
 
                                 cameraSource.stop();
                                 cameraView.setVisibility(View.GONE);
@@ -302,61 +283,126 @@ public class MainActivity extends AppCompatActivity {
                                 set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
                                 set.applyTo(layout1);
 
-                                RetornoValidacao emissor = pega_emissor(document);
-
-                                if (evento_cfg.isEmpty()) {
+                                if (evento_cfg.isEmpty())
                                     evento_cfg = "Evento indefinido";
-                                }
 
-                                if (emissor.erro) {
+                                document = "https://www.cdne.com.br/#val/8EZ7X5/dt/623901600000";
 
-                                    barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                                    Long tsLong = System.currentTimeMillis() / 1000;
-                                    String ts = tsLong.toString();
-                                    db.adiciona_captura(document, emissor.erro, ts, evento_cfg);
-                                    barcodeValue.setText(emissor.resultado);
-                                    prox.setVisibility(View.VISIBLE);
+                                BarcodeType barcodeType = BarcodeService.getBarcodeType(document);
+
+                                if (barcodeType == BarcodeType.CDNE_URL) {
+
+                                    String[] fields =
+                                            BarcodeService.getCodigoAndDataNascimento(document);
+
+                                    String codigoUso = fields[0];
+                                    String dataNascimento = fields[1];
+                                    String codigoAcesso = sharedPref.getString("codigo", "");
+                                    String evento = sharedPref.getString("evento", "");
+
+                                    Date date;
+                                    if (fields[3] == null) {
+                                        try {
+                                            DateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH);
+                                            date = format.parse(dataNascimento);
+                                            format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+                                            dataNascimento = format.format(date);
+
+                                        } catch (ParseException e) {
+                                            e.printStackTrace();
+                                        }
+                                    } else if (Long.class.getName().equals(fields[3])) {
+                                        org.joda.time.LocalDateTime temp = new org.joda.time.LocalDateTime(Long.parseLong(dataNascimento)).plusHours(3);
+                                        org.joda.time.format.DateTimeFormatter dtfOut = DateTimeFormat.forPattern("yyyyMMdd");
+
+                                        dataNascimento = dtfOut.print(temp);
+                                    }
+
+                                    RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+                                    StringRequest stringRequest = new StringRequest(Request.Method.GET,
+                                            GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
+                                                    "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
+
+                                        ValidacaoDTO validacaoDTO = jsonParser.fromJson(response, ValidacaoDTO.class);
+                                        if (!validacaoDTO.getStatus()) {
+
+                                            barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                            prox.setVisibility(View.VISIBLE);
+
+                                        } else {
+
+                                            barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+
+                                            if (verifica_sinal_dados())
+                                                downloadImagem(validacaoDTO.getFoto());
+                                            else
+                                                prox.setVisibility(View.VISIBLE);
+
+                                        }
+
+                                        Long tsLong = System.currentTimeMillis() / 1000;
+                                        String ts = tsLong.toString();
+                                        db.adicionaCaptura(null, validacaoDTO.getStatus(), ts, evento);
+                                        barcodeValue.setText("");
+
+                                    }, error -> Log.e(MainActivity.class.getName(), error.getMessage()));
+
+                                    queue.add(stringRequest);
 
                                 } else {
 
-                                    String emissor_chave = emissor.resultado.concat("_chave");
-                                    String emissor_crl = emissor.resultado.concat("_crl");
+                                    RetornoValidacao emissor = pega_emissor(document);
 
-                                    chavepublica_origem = sharedPref.getString(emissor_chave, "");
-                                    crl_origem = sharedPref.getString(emissor_crl, "");
-
-                                    RetornoValidacao resultado_valida = valida_certificado(document, chavepublica_origem, crl_origem);
-
-                                    if (resultado_valida.erro) {
+                                    if (emissor.erro) {
 
                                         barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                        Long tsLong = System.currentTimeMillis() / 1000;
+                                        String ts = tsLong.toString();
+                                        db.adicionaCaptura(document, emissor.erro, ts, evento_cfg);
+                                        barcodeValue.setText(emissor.resultado);
                                         prox.setVisibility(View.VISIBLE);
 
                                     } else {
 
-                                        barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                        String emissor_chave = emissor.resultado.concat("_chave");
+                                        String emissor_crl = emissor.resultado.concat("_crl");
 
-                                        if (verifica_sinal_dados()) {
+                                        chavepublica_origem = sharedPref.getString(emissor_chave, "");
+                                        crl_origem = sharedPref.getString(emissor_crl, "");
 
-                                            String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(document) + "/image.jpg";
-                                            downloadImagem(urlimagem);
-                                            //dialogo_aviso(MD5(docum));
+                                        RetornoValidacao resultado_valida = valida_certificado(document, chavepublica_origem, crl_origem);
+
+                                        if (resultado_valida.erro) {
+
+                                            barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                            prox.setVisibility(View.VISIBLE);
 
                                         } else {
-                                            prox.setVisibility(View.VISIBLE);
+
+                                            barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+
+                                            if (verifica_sinal_dados()) {
+
+                                                String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(document) + "/image.jpg";
+                                                downloadImagem(urlimagem);
+                                                //dialogo_aviso(MD5(docum));
+
+                                            } else {
+                                                prox.setVisibility(View.VISIBLE);
+                                            }
+
                                         }
 
-                                    }
+                                        Long tsLong = System.currentTimeMillis() / 1000;
+                                        String ts = tsLong.toString();
+                                        db.adicionaCaptura(document, resultado_valida.erro, ts, evento_cfg);
+                                        barcodeValue.setText(resultado_valida.resultado);
 
-                                    Long tsLong = System.currentTimeMillis() / 1000;
-                                    String ts = tsLong.toString();
-                                    db.adiciona_captura(document, resultado_valida.erro, ts, evento_cfg);
-                                    barcodeValue.setText(resultado_valida.resultado);
+                                    }
 
                                 }
 
                             }
-
 
                         });
                     }
@@ -913,7 +959,7 @@ public class MainActivity extends AppCompatActivity {
         try {
 
             final ItemCaptura proxi;
-            proxi = db.retorna_proximo();
+            proxi = db.retornaProximo();
             if (!proxi.getId().equals("")) {
 
                 RequestQueue queue = Volley.newRequestQueue(this);
@@ -937,7 +983,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     if (retorno) {
 
-                                        db.deleta_item(proxi.getId());
+                                        db.deletaItem(proxi.getId());
                                         manda_captura();
 
                                     } else {
@@ -1003,7 +1049,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
 
-                            if (db.total_capturas() > 0) {
+                            if (db.totalCapturas() > 0) {
                                 manda_captura();
                             }
 
@@ -1190,12 +1236,12 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        private void adiciona_captura(String certif, boolean resul, String horario, String evento) {
+        private void adicionaCaptura(String certif, boolean resul, String horario, String evento) {
 
             SQLiteDatabase dbx = this.getWritableDatabase();
             ContentValues values = new ContentValues();
 
-            values.put("certificado", HashUtil.getMD5(certif));
+            values.put("certificado", certif != null ? HashUtil.getMD5(certif) : null);
             values.put("resultado", resul);
             values.put("horario", horario);
             values.put("evento", evento);
@@ -1212,7 +1258,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        private int total_capturas() {
+        private int totalCapturas() {
 
             SQLiteDatabase db = this.getReadableDatabase();
             long cnt = DatabaseUtils.queryNumEntries(db, "capturas");
@@ -1222,7 +1268,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        private void deleta_item(String id) {
+        private void deletaItem(String id) {
 
             SQLiteDatabase db = this.getWritableDatabase();
             db.delete("capturas", "id = ?", new String[]{id});
@@ -1230,7 +1276,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        private ItemCaptura retorna_proximo() {
+        private ItemCaptura retornaProximo() {
 
             String selectQuery = "SELECT * FROM capturas LIMIT 1";
             SQLiteDatabase db = this.getReadableDatabase();

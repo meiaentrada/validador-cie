@@ -13,11 +13,9 @@ public class GlobalConstants {
     public static final String ERRO_REVOGADO = "\n     Documento revogado     \n";
     public static final String DOC_VALIDO = "\n     Documento válido     \n";
 
+    public static final String URL_VALIDATE_OPERADOR =     "https://prod.meiaentrada.org.br/public/operador-codigo-acesso";
 
-//    public static final String URL_VALIDATE_OPERADOR = "https://prod.meiaentrada.org.br/public/operador-codigo-acesso/42b5714";
-
-    public static final String URL_VALIDATE_OPERADOR = "https://prod.meiaentrada.org.br/public/operador-codigo-acesso";
-
-    public static final String URL_VALIDADOR_MEIAENTRADA = "https://prod.meiaentrada.org.br/public/operador-codigo-acesso";
+    public static final String URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO =
+            "https://qczjzea7ah.execute-api.sa-east-1.amazonaws.com/validador_api_3";
 
 }
