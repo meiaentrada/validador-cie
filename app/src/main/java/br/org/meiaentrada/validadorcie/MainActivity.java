@@ -222,7 +222,6 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 fabCodigoAcesso.startAnimation(animFabOpen);
                 fabCpf.startAnimation(animFabOpen);
-                fabCpf.startAnimation(animFabOpen);
                 fabEvento.startAnimation(animFabOpen);
                 fabCodigoDataNascimento.startAnimation(animFabOpen);
 
@@ -232,6 +231,7 @@ public class MainActivity extends AppCompatActivity {
                 fabCpf.setClickable(true);
                 fabEvento.setClickable(true);
                 fabCodigoDataNascimento.setClickable(true);
+
                 isOpen = true;
             }
         });
@@ -319,6 +319,7 @@ public class MainActivity extends AppCompatActivity {
                                 fabCodigoAcesso.setVisibility(View.GONE);
                                 fabCpf.setVisibility(View.GONE);
                                 evento.setVisibility(View.GONE);
+                                fabCodigoDataNascimento.setVisibility(View.GONE);
 
                                 ConstraintSet set = new ConstraintSet();
                                 set.clone(layout1);
@@ -328,6 +329,7 @@ public class MainActivity extends AppCompatActivity {
                                 set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
                                 set.applyTo(layout1);
 
+                                eventoCfg = sharedPref.getString("evento", "");
                                 if (eventoCfg.isEmpty())
                                     eventoCfg = "Evento indefinido";
 
@@ -348,15 +350,20 @@ public class MainActivity extends AppCompatActivity {
                                             GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
                                                     "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
 
+                                        Long tsLong = System.currentTimeMillis() / 1000;
+                                        String ts = tsLong.toString();
+
                                         ValidacaoDTO validacaoDTO = jsonParser.fromJson(response, ValidacaoDTO.class);
                                         if (!validacaoDTO.getStatus()) {
 
                                             barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                            barcodeValue.setText("Documento Invalido!");
                                             prox.setVisibility(View.VISIBLE);
 
                                         } else {
 
                                             barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                            barcodeValue.setText("Documento Valido!");
 
                                             if (verifica_sinal_dados())
                                                 downloadImagem(validacaoDTO.getFoto());
@@ -365,10 +372,8 @@ public class MainActivity extends AppCompatActivity {
 
                                         }
 
-                                        Long tsLong = System.currentTimeMillis() / 1000;
-                                        String ts = tsLong.toString();
-                                        db.adicionaCaptura(null, validacaoDTO.getStatus(), ts, evento);
-                                        barcodeValue.setText("");
+                                        db.adicionaCaptura("", validacaoDTO.getStatus(), ts, evento);
+
 
                                     }, error -> Log.e(MainActivity.class.getName(), error.getMessage()));
 
