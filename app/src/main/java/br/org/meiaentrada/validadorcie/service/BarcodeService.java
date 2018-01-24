@@ -99,10 +99,4 @@ public class BarcodeService {
 
     }
 
-    //    public String getDataNascimento(String dataNascimento) {
-//
-//
-//
-//    }
-
 }
