@@ -85,6 +85,7 @@ import android.provider.Settings.Secure;
 import android.text.InputType;
 
 import com.google.gson.Gson;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.MemoryPolicy;
 import com.squareup.picasso.NetworkPolicy;
@@ -144,7 +145,10 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton fabMenu;
     Animation animFabOpen, animFabClose, animFabRotateClock, animFabRotateAntiClock;
 
-    boolean isOpen = false;
+    TextView lblChaveAcesso, lblLocalEvento, lblConsultaCPF, lblConsultaDataNascimento;
+
+    boolean isMenuOpen = false;
+
     private Gson jsonParser = new Gson();
 
     private CertificadoService certificadoService = new CertificadoService();
@@ -176,8 +180,12 @@ public class MainActivity extends AppCompatActivity {
         fabCodigoAcesso = findViewById(R.id.codigo_definir);
         fabCpf = findViewById(R.id.cpf_definir);
         fabEvento = findViewById(R.id.evento_definir);
-
         fabCodigoDataNascimento = findViewById(R.id.codigo_uso_dt_nascimento);
+
+        lblChaveAcesso = findViewById(R.id.lblChaveAcesso);
+        lblLocalEvento = findViewById(R.id.lblLocalEvento);
+        lblConsultaCPF = findViewById(R.id.lblConsultaCPF);
+        lblConsultaDataNascimento = findViewById(R.id.lblDataNascimento);
 
         animFabOpen = AnimationUtils.loadAnimation(this, R.anim.fab_open);
         animFabClose = AnimationUtils.loadAnimation(this, R.anim.fab_close);
@@ -185,25 +193,37 @@ public class MainActivity extends AppCompatActivity {
         animFabRotateAntiClock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
 
         fabMenu.setOnClickListener(view -> {
-            if (isOpen) {
+
+            if (isMenuOpen) {
                 fabCodigoAcesso.startAnimation(animFabClose);
                 fabCpf.startAnimation(animFabClose);
                 fabEvento.startAnimation(animFabClose);
                 fabCodigoDataNascimento.startAnimation(animFabClose);
 
+                lblConsultaDataNascimento.startAnimation(animFabClose);
+                lblChaveAcesso.startAnimation(animFabClose);
+                lblLocalEvento.startAnimation(animFabClose);
+                lblConsultaCPF.startAnimation(animFabClose);
+
                 fabMenu.startAnimation(animFabRotateAntiClock);
 
                 fabCodigoAcesso.setClickable(false);
                 fabCpf.setClickable(false);
-                fabEvento.setClickable(false);
                 fabCodigoDataNascimento.setClickable(false);
+                fabEvento.setClickable(false);
 
-                isOpen = false;
+                isMenuOpen = false;
             } else {
                 fabCodigoAcesso.startAnimation(animFabOpen);
                 fabCpf.startAnimation(animFabOpen);
+                fabCpf.startAnimation(animFabOpen);
                 fabEvento.startAnimation(animFabOpen);
                 fabCodigoDataNascimento.startAnimation(animFabOpen);
+
+                lblConsultaDataNascimento.startAnimation(animFabOpen);
+                lblChaveAcesso.startAnimation(animFabOpen);
+                lblLocalEvento.startAnimation(animFabOpen);
+                lblConsultaCPF.startAnimation(animFabOpen);
 
                 fabMenu.startAnimation(animFabRotateClock);
 
@@ -211,10 +231,11 @@ public class MainActivity extends AppCompatActivity {
                 fabCpf.setClickable(true);
                 fabEvento.setClickable(true);
                 fabCodigoDataNascimento.setClickable(true);
-
-                isOpen = true;
+                isMenuOpen = true;
             }
+
         });
+
 
         if (checkAndRequestPermissions()) {
 
@@ -452,7 +473,7 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
 
         super.onResume();
-        registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
+        registerReceiver(networkStateReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
     }
 
@@ -465,24 +486,24 @@ public class MainActivity extends AppCompatActivity {
     //Checa e solicita permissoes de acesso
     private boolean checkAndRequestPermissions() {
 
-        int camera = ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA);
+        int camera = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
         int intern = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
         int acl = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-        int rps = ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
-        int ans = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_NETWORK_STATE);
-        int aws = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_WIFI_STATE);
+        int rps = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE);
+        int ans = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE);
+        int aws = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_WIFI_STATE);
         List<String> listPermissionsNeeded = new ArrayList<>();
 
         if (camera != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(android.Manifest.permission.CAMERA);
+            listPermissionsNeeded.add(Manifest.permission.CAMERA);
         if (intern != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(android.Manifest.permission.INTERNET);
+            listPermissionsNeeded.add(Manifest.permission.INTERNET);
         if (rps != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(android.Manifest.permission.READ_PHONE_STATE);
+            listPermissionsNeeded.add(Manifest.permission.READ_PHONE_STATE);
         if (ans != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(android.Manifest.permission.ACCESS_NETWORK_STATE);
+            listPermissionsNeeded.add(Manifest.permission.ACCESS_NETWORK_STATE);
         if (aws != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(android.Manifest.permission.ACCESS_WIFI_STATE);
+            listPermissionsNeeded.add(Manifest.permission.ACCESS_WIFI_STATE);
         if (acl != PackageManager.PERMISSION_GRANTED)
             listPermissionsNeeded.add(Manifest.permission.ACCESS_COARSE_LOCATION);
 
@@ -1067,7 +1088,7 @@ public class MainActivity extends AppCompatActivity {
                 .memoryPolicy(MemoryPolicy.NO_CACHE)
                 .networkPolicy(NetworkPolicy.NO_CACHE)
                 .resize(widths, 0)
-                .into(foto, new com.squareup.picasso.Callback() {
+                .into(foto, new Callback() {
                     @Override
                     public void onSuccess() {
 

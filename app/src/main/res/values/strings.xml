@@ -12,4 +12,10 @@
 
     <string name="codigo_uso">Código de Uso</string>
     <string name="dt_nascimento">Data de Nascimento</string>
+
+
+    <string name="fab_chave_acesso">Chave de acesso</string>
+    <string name="fab_data_nascimento">Consulta por Data Nasc</string>
+    <string name="fab_local_evento">Local Evento</string>
+    <string name="fab_consulta_cpf">Consulta por CPF</string>
 </resources>

@@ -65,16 +65,17 @@
         android:layout_width="wrap_content"
         android:layout_height="24dp"
         android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginLeft="3dp"
+        android:layout_marginEnd="3dp"
         android:background="@android:color/transparent"
         android:gravity="center"
         android:textAlignment="center"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         android:textColor="@android:color/white"
-        android:textSize="8sp"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintLeft_toRightOf="parent"
+        android:layout_marginStart="3dp" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/codigo_uso_dt_nascimento"
@@ -96,6 +97,7 @@
         android:layout_width="@dimen/fab_item_menu"
         android:layout_height="@dimen/fab_item_menu"
         android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         app:fabSize="normal"
         android:layout_marginLeft="8dp"
@@ -112,14 +114,14 @@
         android:layout_width="@dimen/fab_item_menu"
         android:layout_height="@dimen/fab_item_menu"
         android:layout_marginBottom="8dp"
-        android:layout_marginRight="8dp"
-        android:scaleType="center"
-        android:layout_marginLeft="8dp"
-        android:visibility="invisible"
-        android:src="@drawable/ic_location_on"
+        android:layout_marginEnd="8dp"
         android:onClick="dialogoEvento"
+        android:scaleType="center"
+        android:src="@drawable/ic_location_on"
+        android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/codigo_definir"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginRight="8dp" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/codigo_definir"
@@ -128,6 +130,7 @@
         android:onClick="dialogoCodigo"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginLeft="0dp"
         android:layout_marginStart="8dp"
         android:scaleType="center"
         android:src="@drawable/ic_vpn_key"
@@ -141,8 +144,7 @@
         android:layout_width="@dimen/fab_item_menu"
         android:layout_height="@dimen/fab_item_menu"
         android:layout_marginBottom="8dp"
-        android:layout_marginRight="8dp"
-        android:onClick="proximoQrcode"
+        android:layout_marginRight="@dimen/fab_margin_right"
         android:src="@drawable/ic_build"
         android:scaleType="center"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -174,6 +176,84 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/lblChaveAcesso"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
+        android:height="@dimen/fab_item_menu"
+        android:background="@drawable/forma_fab_tooltip"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="@string/fab_chave_acesso"
+        android:textAlignment="textEnd"
+        android:textColor="@color/fab_font_color"
+        android:textSize="@dimen/fab_font_size"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@+id/codigo_definir"
+        app:layout_constraintEnd_toStartOf="@+id/codigo_definir"
+        app:layout_constraintTop_toTopOf="@+id/codigo_definir" />
+
+    <TextView
+        android:id="@+id/lblDataNascimento"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
+        android:height="@dimen/fab_item_menu"
+        android:background="@drawable/forma_fab_tooltip"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="@string/fab_data_nascimento"
+        android:textAlignment="textEnd"
+        android:textColor="@color/fab_font_color"
+        android:textSize="@dimen/fab_font_size"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@+id/codigo_uso_dt_nascimento"
+        app:layout_constraintEnd_toStartOf="@+id/codigo_uso_dt_nascimento"
+        app:layout_constraintTop_toTopOf="@+id/codigo_uso_dt_nascimento" />
+
+    <TextView
+        android:id="@+id/lblLocalEvento"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
+        android:height="@dimen/fab_item_menu"
+        android:background="@drawable/forma_fab_tooltip"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="@string/fab_local_evento"
+        android:textAlignment="textEnd"
+        android:textColor="@color/fab_font_color"
+        android:textSize="@dimen/fab_font_size"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@+id/evento_definir"
+        app:layout_constraintEnd_toStartOf="@+id/evento_definir"
+        app:layout_constraintTop_toTopOf="@+id/evento_definir" />
+
+    <TextView
+        android:id="@+id/lblConsultaCPF"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
+        android:height="@dimen/fab_item_menu"
+        android:background="@drawable/forma_fab_tooltip"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="@string/fab_consulta_cpf"
+        android:textAlignment="textEnd"
+        android:textColor="@color/fab_font_color"
+        android:textSize="@dimen/fab_font_size"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@+id/cpf_definir"
+        app:layout_constraintEnd_toStartOf="@+id/cpf_definir"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/cpf_definir" />
 
 </android.support.constraint.ConstraintLayout>
 
