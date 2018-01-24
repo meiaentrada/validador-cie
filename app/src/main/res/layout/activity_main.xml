@@ -94,7 +94,7 @@
         android:layout_width="@dimen/fab_item_menu"
         android:layout_height="@dimen/fab_item_menu"
         android:layout_marginBottom="8dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginRight="8dp"
         app:fabSize="normal"
         android:layout_marginLeft="8dp"
         android:src="@drawable/ic_cpf"
@@ -102,7 +102,7 @@
         android:onClick="dialogo_cpf"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/evento_definir"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
 
     <android.support.design.widget.FloatingActionButton
@@ -110,14 +110,14 @@
         android:layout_width="@dimen/fab_item_menu"
         android:layout_height="@dimen/fab_item_menu"
         android:layout_marginBottom="8dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginRight="8dp"
         android:scaleType="center"
         android:layout_marginLeft="8dp"
         android:visibility="invisible"
         android:src="@drawable/ic_location_on"
         android:onClick="dialogoEvento"
         app:layout_constraintBottom_toTopOf="@+id/codigo_definir"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
 
     <android.support.design.widget.FloatingActionButton
@@ -132,7 +132,7 @@
         android:src="@drawable/ic_vpn_key"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/menu"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
          />
 
     <android.support.design.widget.FloatingActionButton
@@ -140,22 +140,23 @@
         android:layout_width="@dimen/fab_item_menu"
         android:layout_height="@dimen/fab_item_menu"
         android:layout_marginBottom="8dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginRight="8dp"
         android:onClick="proximo_qrcode"
         android:src="@drawable/ic_build"
         android:scaleType="center"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         tools:ignore="RtlCompat" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/proximo"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="@dimen/fab_item_menu"
+        android:layout_height="@dimen/fab_item_menu"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:src="@drawable/prox"
+        android:scaleType="center"
+        android:src="@drawable/ic_ok"
         android:onClick="proximo_qrcode"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
