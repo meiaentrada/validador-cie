@@ -9,7 +9,6 @@
     android:background="@android:color/black"
     tools:context="br.org.meiaentrada.validadorcie.MainActivity">
 
-
     <SurfaceView
         android:id="@+id/camera"
         android:layout_width="match_parent"
@@ -24,7 +23,6 @@
         app:layout_constraintTop_toTopOf="@+id/resultado"
         app:layout_constraintVertical_bias="0.0" />
 
-
     <ImageView
         android:id="@+id/foto"
         android:layout_width="wrap_content"
@@ -34,7 +32,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
 
     <TextView
         android:id="@+id/resultado"
@@ -79,15 +76,20 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!--<Button-->
-        <!--android:id="@+id/codigo_uso_dt_nascimento"-->
-        <!--android:layout_width="48dp"-->
-        <!--android:layout_height="48dp"-->
-        <!--android:layout_marginBottom="8dp"-->
-        <!--android:background="@drawable/cpf"-->
-        <!--android:onClick="dialogoValidacaoCasoUsoDataNascimento"-->
-        <!--app:layout_constraintBottom_toTopOf="@+id/cpf_definir"-->
-        <!--app:layout_constraintStart_toStartOf="parent" />-->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/codigo_uso_dt_nascimento"
+        android:layout_width="@dimen/fab_item_menu"
+        android:layout_height="@dimen/fab_item_menu"
+        android:layout_marginBottom="8dp"
+        android:layout_marginRight="8dp"
+        app:fabSize="normal"
+        android:layout_marginLeft="8dp"
+        android:src="@drawable/ic_action_name"
+        android:scaleType="center"
+        android:onClick="dialogoValidacaoCasoUsoDataNascimento"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/cpf_definir"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/cpf_definir"
@@ -102,8 +104,8 @@
         android:onClick="dialogo_cpf"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/evento_definir"
-        app:layout_constraintEnd_toEndOf="parent" />
-
+        app:layout_constraintEnd_toEndOf="parent"
+        android:tint="@color/iconFontWhite" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/evento_definir"
@@ -118,7 +120,6 @@
         android:onClick="dialogoEvento"
         app:layout_constraintBottom_toTopOf="@+id/codigo_definir"
         app:layout_constraintEnd_toEndOf="parent" />
-
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/codigo_definir"

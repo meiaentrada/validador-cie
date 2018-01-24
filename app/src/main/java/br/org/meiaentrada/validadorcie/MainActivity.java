@@ -14,10 +14,6 @@ JVM: OpenJDK 64-Bit Server VM by JetBrains s.r.o
 
 package br.org.meiaentrada.validadorcie;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -87,7 +83,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.util.encoders.Base64;
-import org.joda.time.format.DateTimeFormat;
 import org.json.*;
 
 import android.graphics.PorterDuff;
@@ -136,25 +131,30 @@ import br.org.meiaentrada.validadorcie.util.HashUtil;
 public class MainActivity extends AppCompatActivity {
 
     BarcodeDetector barcodeDetector;
-    String evento_cfg;
+    String eventoCfg;
     SharedPreferences sharedPref;
     DatabaseHandler db = new DatabaseHandler(this);
+
     private CameraSource cameraSource;
     private SurfaceView cameraView;
     private TextView barcodeValue;
     private TextView conectado;
     private TextView evento;
     private ProgressBar fotop;
-    private String codigo_cfg;
-    private String crl_origem;
-    private String chavepublica_origem;
+    private String codigoCfg;
+    private String crlOrigem;
+    private String chavepublicaOrigem;
     private ImageView foto;
+
     private FloatingActionButton prox;
-    private FloatingActionButton fab_evento;
-    private FloatingActionButton fab_codigo_acesso;
-    private FloatingActionButton fab_cpf;
+    private FloatingActionButton fabEvento;
+    private FloatingActionButton fabCodigoAcesso;
+    private FloatingActionButton fabCpf;
+    private FloatingActionButton fabCodigoDataNascimento;
+
     private ConstraintLayout layout1;
     public AlertDialog alerta;
+
     LocationManager locationManager;
     String provider;
     MyLocationListener mylistener;
@@ -163,11 +163,10 @@ public class MainActivity extends AppCompatActivity {
     String longitude;
     String androidId;
 
-    FloatingActionButton fab_menu;
-    Animation anim_fab_open, anim_fab_close, anim_fab_rotate_clock, anim_fab_rotate_anti_clock;
+    FloatingActionButton fabMenu;
+    Animation animFabOpen, animFabClose, animFabRotateClock, animFabRotateAntiClock;
 
     boolean isOpen = false;
-
     private Gson jsonParser = new Gson();
 
     @Override
@@ -177,8 +176,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        evento_cfg = sharedPref.getString("evento", "");
-        codigo_cfg = sharedPref.getString("codigo", "");
+        eventoCfg = sharedPref.getString("evento", "");
+        codigoCfg = sharedPref.getString("codigo", "");
         cameraView = findViewById(R.id.camera);
         barcodeValue = findViewById(R.id.resultado);
         prox = findViewById(R.id.proximo);
@@ -189,48 +188,51 @@ public class MainActivity extends AppCompatActivity {
         fotop.setVisibility(View.GONE);
         conectado = findViewById(R.id.conectado);
         evento = findViewById(R.id.evento);
-        evento.setText(evento_cfg);
+        evento.setText(eventoCfg);
         layout1 = findViewById(R.id.layout1);
         androidId = Secure.ANDROID_ID;
 
-        fab_menu = findViewById(R.id.menu);
-        fab_codigo_acesso = findViewById(R.id.codigo_definir);
-        fab_cpf = findViewById(R.id.cpf_definir);
-        fab_evento = findViewById(R.id.evento_definir);
+        fabMenu = findViewById(R.id.menu);
+        fabCodigoAcesso = findViewById(R.id.codigo_definir);
+        fabCpf = findViewById(R.id.cpf_definir);
+        fabEvento = findViewById(R.id.evento_definir);
 
-        anim_fab_open = AnimationUtils.loadAnimation(this, R.anim.fab_open);
-        anim_fab_close = AnimationUtils.loadAnimation(this, R.anim.fab_close);
-        anim_fab_rotate_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
-        anim_fab_rotate_anti_clock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
+        fabCodigoDataNascimento = findViewById(R.id.codigo_uso_dt_nascimento);
 
-        fab_menu.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (isOpen) {
-                    fab_codigo_acesso.startAnimation(anim_fab_close);
-                    fab_cpf.startAnimation(anim_fab_close);
-                    fab_evento.startAnimation(anim_fab_close);
+        animFabOpen = AnimationUtils.loadAnimation(this, R.anim.fab_open);
+        animFabClose = AnimationUtils.loadAnimation(this, R.anim.fab_close);
+        animFabRotateClock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
+        animFabRotateAntiClock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
 
-                    fab_menu.startAnimation(anim_fab_rotate_anti_clock);
+        fabMenu.setOnClickListener(view -> {
+            if (isOpen) {
+                fabCodigoAcesso.startAnimation(animFabClose);
+                fabCpf.startAnimation(animFabClose);
+                fabEvento.startAnimation(animFabClose);
+                fabCodigoDataNascimento.startAnimation(animFabClose);
 
-                    fab_codigo_acesso.setClickable(false);
-                    fab_cpf.setClickable(false);
-                    fab_evento.setClickable(false);
+                fabMenu.startAnimation(animFabRotateAntiClock);
 
-                    isOpen = false;
-                } else {
-                    fab_codigo_acesso.startAnimation(anim_fab_open);
-                    fab_cpf.startAnimation(anim_fab_open);
-                    fab_cpf.startAnimation(anim_fab_open);
-                    fab_evento.startAnimation(anim_fab_open);
+                fabCodigoAcesso.setClickable(false);
+                fabCpf.setClickable(false);
+                fabEvento.setClickable(false);
+                fabCodigoDataNascimento.setClickable(false);
 
-                    fab_menu.startAnimation(anim_fab_rotate_clock);
+                isOpen = false;
+            } else {
+                fabCodigoAcesso.startAnimation(animFabOpen);
+                fabCpf.startAnimation(animFabOpen);
+                fabCpf.startAnimation(animFabOpen);
+                fabEvento.startAnimation(animFabOpen);
+                fabCodigoDataNascimento.startAnimation(animFabOpen);
 
-                    fab_codigo_acesso.setClickable(true);
-                    fab_cpf.setClickable(true);
-                    fab_evento.setClickable(true);
-                    isOpen = true;
-                }
+                fabMenu.startAnimation(animFabRotateClock);
+
+                fabCodigoAcesso.setClickable(true);
+                fabCpf.setClickable(true);
+                fabEvento.setClickable(true);
+                fabCodigoDataNascimento.setClickable(true);
+                isOpen = true;
             }
         });
 
@@ -313,9 +315,9 @@ public class MainActivity extends AppCompatActivity {
 
                                 cameraSource.stop();
                                 cameraView.setVisibility(View.GONE);
-                                fab_evento.setVisibility(View.GONE);
-                                fab_codigo_acesso.setVisibility(View.GONE);
-                                fab_cpf.setVisibility(View.GONE);
+                                fabEvento.setVisibility(View.GONE);
+                                fabCodigoAcesso.setVisibility(View.GONE);
+                                fabCpf.setVisibility(View.GONE);
                                 evento.setVisibility(View.GONE);
 
                                 ConstraintSet set = new ConstraintSet();
@@ -326,8 +328,8 @@ public class MainActivity extends AppCompatActivity {
                                 set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
                                 set.applyTo(layout1);
 
-                                if (evento_cfg.isEmpty())
-                                    evento_cfg = "Evento indefinido";
+                                if (eventoCfg.isEmpty())
+                                    eventoCfg = "Evento indefinido";
 
                                 BarcodeType barcodeType = BarcodeService.getBarcodeType(document);
 
@@ -381,7 +383,7 @@ public class MainActivity extends AppCompatActivity {
                                         barcodeValue.setTextColor(Color.rgb(255, 0, 0));
                                         Long tsLong = System.currentTimeMillis() / 1000;
                                         String ts = tsLong.toString();
-                                        db.adicionaCaptura(document, emissor.erro, ts, evento_cfg);
+                                        db.adicionaCaptura(document, emissor.erro, ts, eventoCfg);
                                         barcodeValue.setText(emissor.resultado);
                                         prox.setVisibility(View.VISIBLE);
 
@@ -390,10 +392,10 @@ public class MainActivity extends AppCompatActivity {
                                         String emissor_chave = emissor.resultado.concat("_chave");
                                         String emissor_crl = emissor.resultado.concat("_crl");
 
-                                        chavepublica_origem = sharedPref.getString(emissor_chave, "");
-                                        crl_origem = sharedPref.getString(emissor_crl, "");
+                                        chavepublicaOrigem = sharedPref.getString(emissor_chave, "");
+                                        crlOrigem = sharedPref.getString(emissor_crl, "");
 
-                                        RetornoValidacao resultado_valida = valida_certificado(document, chavepublica_origem, crl_origem);
+                                        RetornoValidacao resultado_valida = valida_certificado(document, chavepublicaOrigem, crlOrigem);
 
                                         if (resultado_valida.erro) {
 
@@ -418,7 +420,7 @@ public class MainActivity extends AppCompatActivity {
 
                                         Long tsLong = System.currentTimeMillis() / 1000;
                                         String ts = tsLong.toString();
-                                        db.adicionaCaptura(document, resultado_valida.erro, ts, evento_cfg);
+                                        db.adicionaCaptura(document, resultado_valida.erro, ts, eventoCfg);
                                         barcodeValue.setText(resultado_valida.resultado);
 
                                     }
@@ -733,7 +735,7 @@ public class MainActivity extends AppCompatActivity {
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putString("evento", retorno);
                     editor.apply();
-                    evento_cfg = sharedPref.getString("evento", "");
+                    eventoCfg = sharedPref.getString("evento", "");
 
                 }
 
@@ -776,7 +778,7 @@ public class MainActivity extends AppCompatActivity {
                 SharedPreferences.Editor editor = sharedPref.edit();
                 editor.putString("codigo", codigoAcesso);
 
-                codigo_cfg = sharedPref.getString("codigo", "");
+                codigoCfg = sharedPref.getString("codigo", "");
 
                 String endpoint = GlobalConstants.URL_VALIDATE_OPERADOR + "/" + codigoAcesso;
                 JsonObjectRequest request = new JsonObjectRequest(
@@ -856,10 +858,10 @@ public class MainActivity extends AppCompatActivity {
         foto.setVisibility(View.GONE);
         prox.setVisibility(View.GONE);
         cameraView.setVisibility(View.VISIBLE);
-        fab_evento.setVisibility(View.VISIBLE);
-        fab_codigo_acesso.setVisibility(View.VISIBLE);
+        fabEvento.setVisibility(View.VISIBLE);
+        fabCodigoAcesso.setVisibility(View.VISIBLE);
         evento.setVisibility(View.VISIBLE);
-        fab_cpf.setVisibility(View.VISIBLE);
+        fabCpf.setVisibility(View.VISIBLE);
 
         try {
 
@@ -888,9 +890,9 @@ public class MainActivity extends AppCompatActivity {
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            fab_evento.setVisibility(View.GONE);
-            fab_codigo_acesso.setVisibility(View.GONE);
-            fab_cpf.setVisibility(View.GONE);
+            fabEvento.setVisibility(View.GONE);
+            fabCodigoAcesso.setVisibility(View.GONE);
+            fabCpf.setVisibility(View.GONE);
             evento.setVisibility(View.GONE);
 
             ConstraintSet set = new ConstraintSet();
@@ -959,7 +961,7 @@ public class MainActivity extends AppCompatActivity {
                 public Map<String, String> getHeaders() throws AuthFailureError {
                     Map<String, String> params = new HashMap<>();
                     params.put("cpff", cpfe);
-                    params.put("codigoAcesso", codigo_cfg);
+                    params.put("codigoAcesso", codigoCfg);
 
                     return params;
                 }
@@ -993,7 +995,7 @@ public class MainActivity extends AppCompatActivity {
                 params.put("latitude", proxi.getLatitude());
                 params.put("longitude", proxi.getLongitude());
                 params.put("idDispositivo", proxi.getIdDispositivo());
-                params.put("codigoAcesso", codigo_cfg);
+                params.put("codigoAcesso", codigoCfg);
 
                 JsonObjectRequest postRequest = new JsonObjectRequest(GlobalConstants.URL_CAPTURAS, new JSONObject(params),
                         new Response.Listener<JSONObject>() {
