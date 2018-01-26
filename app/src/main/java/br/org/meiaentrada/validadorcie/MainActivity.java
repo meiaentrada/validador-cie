@@ -3,6 +3,7 @@ package br.org.meiaentrada.validadorcie;
 import java.util.Map;
 import java.util.HashMap;
 
+import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -13,9 +14,11 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.view.LayoutInflater;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.EditText;
 import android.net.ConnectivityManager;
 import android.widget.ImageView;
@@ -633,38 +636,30 @@ public class MainActivity extends AppCompatActivity {
 
     public void dialogoValidacaoCasoUsoDataNascimento(View view) {
 
-        if (alerta != null) {
+        if (alerta != null)
             alerta.dismiss();
-        }
 
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        final View layout = View.inflate(this, R.layout.dialog_validar_codigo_uso_data_nascimento, null);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder
+                .setView(layout)
+                .setTitle("Validar por Código de Uso e Data de Nascimento")
+                .setPositiveButton(R.string.dialog_ok, (d, id) -> {
 
-        final EditText editTextCodigoUso = new EditText(this);
-        editTextCodigoUso.setHint("Código de Uso");
-        editTextCodigoUso.getBackground().mutate().setColorFilter(getResources().getColor(R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
+                    EditText edtCodigoUso = layout.findViewById(R.id.codigoUso);
+                    EditText editDataNascimento = layout.findViewById(R.id.dataNacimento);
 
-        final EditText editTextDataNascimento = new EditText(this);
-        editTextDataNascimento.setHint("Data Nascimento");
-        editTextDataNascimento.getBackground().mutate().setColorFilter(getResources().getColor(R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
+                    String codigoUso = edtCodigoUso.getText().toString();
+                    String dataNascimento = editDataNascimento.getText().toString();
 
-        alertDialogBuilder.setView(editTextCodigoUso);
-        alertDialogBuilder.setView(editTextDataNascimento);
-
-        int paddingPixel = 20;
-        float density = this.getResources().getDisplayMetrics().density;
-        int paddingDp = (int) (paddingPixel * density);
-        editTextCodigoUso.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
-        editTextDataNascimento.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
+                    validaCodigoUsoDataNascimento(codigoUso, dataNascimento);
 
 
-        alertDialogBuilder.setNegativeButton(R.string.dialog_cancel, (dialog, id) -> {
-        });
+                }).setNegativeButton(R.string.dialog_cancel, (d, id) -> {
+                }
+        );
 
-        alertDialogBuilder.setPositiveButton(R.string.dialog_ok, (dialog, id) -> {
-
-        });
-
-        alerta = alertDialogBuilder.create();
+        alerta = builder.create();
         alerta.show();
 
     }
@@ -901,6 +896,95 @@ public class MainActivity extends AppCompatActivity {
                     params.put("cpf", cpfe);
                     params.put("codigoAcesso", codigoCfg);
 
+                    return params;
+                }
+
+            };
+
+            queue.add(postRequest);
+
+        } else {
+            dialogoAviso("Sem conectividade");
+        }
+
+    }
+
+    public void validaCodigoUsoDataNascimento(String codigoUso, String dataNascimento) {
+
+        if (verificaSinalDados()) {
+
+            fotop.setVisibility(View.VISIBLE);
+
+            cameraSource.stop();
+            cameraView.setVisibility(View.GONE);
+            fabEvento.setVisibility(View.GONE);
+            fabCodigoAcesso.setVisibility(View.GONE);
+            fabCpf.setVisibility(View.GONE);
+            evento.setVisibility(View.GONE);
+
+            ConstraintSet set = new ConstraintSet();
+            set.clone(layout1);
+            set.clear(barcodeValue.getId(), ConstraintSet.TOP);
+            set.clear(barcodeValue.getId(), ConstraintSet.BOTTOM);
+            set.connect(barcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
+            set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
+            set.applyTo(layout1);
+
+            String codigoAcesso = sharedPref.getString("codigo", "");
+            String evento = sharedPref.getString("evento", "");
+
+            RequestQueue queue = Volley.newRequestQueue(this);
+
+            StringRequest postRequest = new StringRequest(Request.Method.GET,
+                    GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
+                            "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
+
+                        fotop.setVisibility(View.GONE);
+
+                        try {
+
+                            JSONObject obj = new JSONObject(response);
+
+                            Boolean retorno = obj.getBoolean("status");
+
+                            if (retorno) {
+
+                                barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                downloadImagem(obj.getString("foto"));
+                                barcodeValue.setText(GlobalConstants.DOC_VALIDO);
+
+                            } else {
+
+                                barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                String msgerro = obj.getString("msg");
+                                barcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
+                                prox.setVisibility(View.VISIBLE);
+
+                            }
+
+                        } catch (Exception e) {
+
+                            e.printStackTrace();
+                            fotop.setVisibility(View.GONE);
+                            barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                            barcodeValue.setText("\nErro de conectividade, tente novamente\n");
+                            prox.setVisibility(View.VISIBLE);
+
+                        }
+                    },
+                    error -> {
+
+                        fotop.setVisibility(View.GONE);
+                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                        barcodeValue.setText("\nErro de conectividade, tente novamente\n");
+                        prox.setVisibility(View.VISIBLE);
+
+                    }
+            ) {
+
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String, String> params = new HashMap<>();
                     return params;
                 }
 
