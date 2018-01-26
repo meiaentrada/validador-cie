@@ -715,86 +715,70 @@ public class MainActivity extends AppCompatActivity {
         if (alerta != null)
             alerta.dismiss();
 
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setTitle("Código de Acesso");
+        final View layout = View.inflate(this, R.layout.dialog_codigo_acesso, null);
 
-        EditText editText = new EditText(this);
-        editText.setHint("Informe o Código de Acesso");
-        editText.getBackground().mutate().setColorFilter(getResources().getColor(
-                R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
+        String codigo = sharedPref.getString("codigo", "");
+        TextView textViewEmail = layout.findViewById(R.id.textEmail);
+        textViewEmail.setText("");
 
-        alertDialogBuilder.setView(editText);
+        if (!codigo.isEmpty()) {
+            String email = "Usuário Atual: \n" + sharedPref.getString("email", "");
+            textViewEmail.setText(email);
+        }
 
-        int paddingPixel = 20;
-        float density = this.getResources().getDisplayMetrics().density;
-        int paddingDp = (int) (paddingPixel * density);
-        editText.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder
+                .setView(layout)
+                .setTitle("Código de Acesso")
+                .setPositiveButton(R.string.dialog_ok, (d, id) -> {
 
-        alertDialogBuilder.setNegativeButton(R.string.dialog_cancel, (dialog, id) -> {
-        });
+                    EditText editChaveAcesso = layout.findViewById(R.id.editChaveAcesso);
+                    String codigoAcesso = editChaveAcesso.getText().toString().trim();
 
-        alertDialogBuilder.setPositiveButton(R.string.dialog_ok, (dialog, id) -> {
+                    if (!codigoAcesso.isEmpty()) {
 
-            String codigoAcesso = editText.getText().toString().trim();
-            if (!codigoAcesso.isEmpty()) {
+                        SharedPreferences.Editor editor = sharedPref.edit();
+                        editor.putString("codigo", codigoAcesso);
 
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putString("codigo", codigoAcesso);
+                        codigoCfg = sharedPref.getString("codigo", "");
 
-                codigoCfg = sharedPref.getString("codigo", "");
+                        String endpoint = GlobalConstants.URL_VALIDATE_OPERADOR + "/" + codigoAcesso;
+                        RequestQueue queue = Volley.newRequestQueue(this);
 
-                String endpoint = GlobalConstants.URL_VALIDATE_OPERADOR + "/" + codigoAcesso;
-                JsonObjectRequest request = new JsonObjectRequest(
-                        Request.Method.GET, endpoint, null, response -> {
+                        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                                (Request.Method.GET, endpoint, null, response -> {
 
-                    try {
+                                    try {
 
-                        String email = response.getString("email");
-                        editor.putString("email", email);
-                        editor.apply();
+                                        String email = response.getString("email");
+                                        editor.putString("email", email);
+                                        editor.apply();
 
-                    } catch (JSONException e) {
+                                    } catch (JSONException e) {
+                                        Log.e("", e.getMessage());
+                                    }
 
-                        Log.e("", e.getMessage());
+                                }, error -> {
+
+                                    // TODO Auto-generated method stub
+
+                                });
+
+                        queue.add(jsObjRequest);
+                        ToastService.showToast("Código de acesso salvo.", getApplicationContext());
+
+                    } else {
+
+                        ToastService.showToast("Código de acesso em branco.", getApplicationContext());
 
                     }
 
-                }, error ->
-                        Log.e(HttpService.class.getName(), error.getMessage()));
 
-                RequestQueue queue = Volley.newRequestQueue(this);
+                }).setNegativeButton(R.string.dialog_cancel, (d, id) -> {
+                }
+        );
 
-                JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                        (Request.Method.GET, endpoint, null, response -> {
-
-                            try {
-
-                                String email = response.getString("email");
-                                editor.putString("email", email);
-                                editor.apply();
-
-                            } catch (JSONException e) {
-                                Log.e("", e.getMessage());
-                            }
-
-                        }, error -> {
-
-                            // TODO Auto-generated method stub
-
-                        });
-
-                queue.add(jsObjRequest);
-                ToastService.showToast("Código de acesso salvo.", getApplicationContext());
-
-            } else {
-
-                ToastService.showToast("Código de acesso em branco.", getApplicationContext());
-
-            }
-
-        });
-
-        alerta = alertDialogBuilder.create();
+        alerta = builder.create();
         alerta.show();
 
     }
@@ -950,39 +934,39 @@ public class MainActivity extends AppCompatActivity {
                     GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
                             "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
 
-                        fotop.setVisibility(View.GONE);
+                fotop.setVisibility(View.GONE);
 
-                        try {
+                try {
 
-                            JSONObject obj = new JSONObject(response);
+                    JSONObject obj = new JSONObject(response);
 
-                            Boolean retorno = obj.getBoolean("status");
+                    Boolean retorno = obj.getBoolean("status");
 
-                            if (retorno) {
+                    if (retorno) {
 
-                                barcodeValue.setTextColor(Color.rgb(0, 255, 0));
-                                downloadImagem(obj.getString("foto"));
-                                barcodeValue.setText(GlobalConstants.DOC_VALIDO);
+                        barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                        downloadImagem(obj.getString("foto"));
+                        barcodeValue.setText(GlobalConstants.DOC_VALIDO);
 
-                            } else {
+                    } else {
 
-                                barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                                String msgerro = obj.getString("msg");
-                                barcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
-                                prox.setVisibility(View.VISIBLE);
+                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                        String msgerro = obj.getString("msg");
+                        barcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
+                        prox.setVisibility(View.VISIBLE);
 
-                            }
+                    }
 
-                        } catch (Exception e) {
+                } catch (Exception e) {
 
-                            e.printStackTrace();
-                            fotop.setVisibility(View.GONE);
-                            barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                            barcodeValue.setText("\nErro de conectividade, tente novamente\n");
-                            prox.setVisibility(View.VISIBLE);
+                    e.printStackTrace();
+                    fotop.setVisibility(View.GONE);
+                    barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                    barcodeValue.setText("\nErro de conectividade, tente novamente\n");
+                    prox.setVisibility(View.VISIBLE);
 
-                        }
-                    },
+                }
+            },
                     error -> {
 
                         fotop.setVisibility(View.GONE);
