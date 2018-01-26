@@ -8,6 +8,10 @@
         android:id="@+id/textEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginTop="16dp"
         android:text="@string/fab_chave_acesso"
         android:padding="@dimen/lbl_padding"/>
 
@@ -15,6 +19,10 @@
         android:id="@+id/editChaveAcesso"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginTop="16dp"
         android:fontFamily="sans-serif"
         android:hint="@string/fab_chave_acesso"
         android:inputType="text" />
