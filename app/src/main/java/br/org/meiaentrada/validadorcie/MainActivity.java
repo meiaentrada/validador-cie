@@ -1,5 +1,7 @@
 package br.org.meiaentrada.validadorcie;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -932,6 +934,12 @@ public class MainActivity extends AppCompatActivity {
 
             String codigoAcesso = sharedPref.getString("codigo", "");
             String evento = sharedPref.getString("evento", "");
+
+            try {
+                evento = URLEncoder.encode(evento, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
 
             RequestQueue queue = Volley.newRequestQueue(this);
 
