@@ -21,6 +21,7 @@ import android.util.Log;
 import android.widget.EditText;
 import android.net.ConnectivityManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -143,14 +144,14 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton fabMenu;
     Animation animFabOpen, animFabClose, animFabRotateClock, animFabRotateAntiClock;
 
-    TextView lblChaveAcesso, lblLocalEvento, lblConsultaCPF, lblConsultaDataNascimento;
-
     boolean isMenuOpen = false;
 
     private Gson jsonParser = new Gson();
 
     private CertificadoService certificadoService = new CertificadoService();
 
+
+    ConstraintLayout contCpf, contEvento, contChave, contCodData;
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -174,16 +175,16 @@ public class MainActivity extends AppCompatActivity {
         layout1 = findViewById(R.id.layout1);
         androidId = Secure.ANDROID_ID;
 
+        contCpf = findViewById(R.id.cont_cpf);
+        contEvento = findViewById(R.id.cont_evento);
+        contChave = findViewById(R.id.cont_chave_acesso);
+        contCodData = findViewById(R.id.cont_codigo_data_nasc);
+
         fabMenu = findViewById(R.id.menu);
         fabCodigoAcesso = findViewById(R.id.codigo_definir);
         fabCpf = findViewById(R.id.cpf_definir);
         fabEvento = findViewById(R.id.evento_definir);
         fabCodigoDataNascimento = findViewById(R.id.codigo_uso_dt_nascimento);
-
-        lblChaveAcesso = findViewById(R.id.lblChaveAcesso);
-        lblLocalEvento = findViewById(R.id.lblLocalEvento);
-        lblConsultaCPF = findViewById(R.id.lblConsultaCPF);
-        lblConsultaDataNascimento = findViewById(R.id.lblDataNascimento);
 
         animFabOpen = AnimationUtils.loadAnimation(this, R.anim.fab_open);
         animFabClose = AnimationUtils.loadAnimation(this, R.anim.fab_close);
@@ -193,15 +194,10 @@ public class MainActivity extends AppCompatActivity {
         fabMenu.setOnClickListener(view -> {
 
             if (isMenuOpen) {
-                fabCodigoAcesso.startAnimation(animFabClose);
-                fabCpf.startAnimation(animFabClose);
-                fabEvento.startAnimation(animFabClose);
-                fabCodigoDataNascimento.startAnimation(animFabClose);
-
-                lblConsultaDataNascimento.startAnimation(animFabClose);
-                lblChaveAcesso.startAnimation(animFabClose);
-                lblLocalEvento.startAnimation(animFabClose);
-                lblConsultaCPF.startAnimation(animFabClose);
+                contChave.startAnimation(animFabClose);
+                contCpf.startAnimation(animFabClose);
+                contEvento.startAnimation(animFabClose);
+                contCodData.startAnimation(animFabClose);
 
                 fabMenu.startAnimation(animFabRotateAntiClock);
 
@@ -212,16 +208,10 @@ public class MainActivity extends AppCompatActivity {
 
                 isMenuOpen = false;
             } else {
-                fabCodigoAcesso.startAnimation(animFabOpen);
-                fabCpf.startAnimation(animFabOpen);
-                fabCpf.startAnimation(animFabOpen);
-                fabEvento.startAnimation(animFabOpen);
-                fabCodigoDataNascimento.startAnimation(animFabOpen);
-
-                lblConsultaDataNascimento.startAnimation(animFabOpen);
-                lblChaveAcesso.startAnimation(animFabOpen);
-                lblLocalEvento.startAnimation(animFabOpen);
-                lblConsultaCPF.startAnimation(animFabOpen);
+                contChave.startAnimation(animFabOpen);
+                contCpf.startAnimation(animFabOpen);
+                contEvento.startAnimation(animFabOpen);
+                contCodData.startAnimation(animFabOpen);
 
                 fabMenu.startAnimation(animFabRotateClock);
 
