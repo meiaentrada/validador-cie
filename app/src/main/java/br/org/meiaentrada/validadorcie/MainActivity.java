@@ -5,7 +5,6 @@ import java.net.URLEncoder;
 import java.util.Map;
 import java.util.HashMap;
 
-import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -16,11 +15,9 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.view.LayoutInflater;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.util.Log;
-import android.widget.Button;
 import android.widget.EditText;
 import android.net.ConnectivityManager;
 import android.widget.ImageView;
@@ -342,6 +339,12 @@ public class MainActivity extends AppCompatActivity {
                                 String dataNascimento = fields[1];
                                 String codigoAcesso = sharedPref.getString("codigo", "");
                                 String evento = sharedPref.getString("evento", "");
+
+                                try {
+                                    evento = URLEncoder.encode(evento, "UTF-8");
+                                } catch (UnsupportedEncodingException e) {
+                                    e.printStackTrace();
+                                }
 
                                 RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
                                 StringRequest stringRequest = new StringRequest(Request.Method.GET,

@@ -6,13 +6,12 @@ import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
+
 
 import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
 
@@ -47,11 +46,16 @@ public class BarcodeService {
                 .replace("/convenio/", "")
                 .replace("/validardne/", "/")
                 .replace("/validardne", "/")
-        ;
+                .replace("http://", "")
+                .replace("https://", "")
+                .replace("www.", "");
 
-        String[] fields = barcodeData.replaceAll("(.+?(?=[^A-Z]))/(\\d+)", "$1;$2").split(";");
-        if (fields.length == 3)
-            return new String[]{fields[1], getDataNascimento(fields[2], convertionType)};
+        String[] fields = barcodeData
+                .replaceAll("(cdne.com.br/)(.+?(?=[^A-Z]))/(\\d+)", "$2;$3")
+                .split(";");
+
+        if (fields.length == 2)
+            return new String[]{fields[0], getDataNascimento(fields[1], convertionType)};
         return new String[]{};
 
     }
