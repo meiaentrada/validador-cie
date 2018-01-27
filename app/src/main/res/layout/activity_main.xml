@@ -83,18 +83,24 @@
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/cont_codigo_data_nasc"
-        android:layout_width="314dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/cont_cpf"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintRight_toRightOf="parent">
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0">
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/codigo_uso_dt_nascimento"
-            android:layout_width="@dimen/fab_item_menu"
-            android:layout_height="@dimen/fab_item_menu"
+            android:layout_width="@dimen/fab_item_simples"
+            android:layout_height="@dimen/fab_item_simples"
             android:onClick="dialogoValidacaoCasoUsoDataNascimento"
             android:scaleType="center"
             android:src="@drawable/ic_action_name"
@@ -111,7 +117,7 @@
             android:layout_marginEnd="15dp"
             android:layout_marginRight="15dp"
             android:layout_weight="1"
-            android:height="@dimen/fab_item_menu"
+            android:height="@dimen/fab_item_simples"
             android:background="@drawable/forma_fab_tooltip"
             android:gravity="center|end"
             android:padding="8dp"
@@ -129,20 +135,22 @@
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/cont_cpf"
-        android:layout_width="308dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
         android:orientation="horizontal"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/cont_evento"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintRight_toRightOf="parent">
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent">
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/cpf_definir"
-            android:layout_width="@dimen/fab_item_menu"
-            android:layout_height="@dimen/fab_item_menu"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_width="@dimen/fab_item_simples"
+            android:layout_height="@dimen/fab_item_simples"
             android:onClick="dialogoCpf"
             android:scaleType="center"
             android:src="@drawable/ic_cpf"
@@ -160,7 +168,7 @@
             android:layout_marginEnd="15dp"
             android:layout_marginRight="15dp"
             android:layout_weight="1"
-            android:height="@dimen/fab_item_menu"
+            android:height="@dimen/fab_item_simples"
             android:background="@drawable/forma_fab_tooltip"
             android:gravity="center|end"
             android:padding="8dp"
@@ -178,21 +186,25 @@
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/cont_evento"
-        android:layout_width="303dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
         android:orientation="horizontal"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/cont_chave_acesso"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/camera">
 
         <TextView
             android:id="@+id/lblLocalEvento"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginRight="16dp"
+            android:layout_marginEnd="15dp"
             android:layout_weight="1"
-            android:height="@dimen/fab_item_menu"
+            android:height="@dimen/fab_item_simples"
             android:background="@drawable/forma_fab_tooltip"
             android:gravity="center|end"
             android:padding="8dp"
@@ -204,12 +216,13 @@
             app:layout_constraintBottom_toBottomOf="@+id/evento_definir"
             app:layout_constraintEnd_toStartOf="@+id/evento_definir"
             app:layout_constraintTop_toTopOf="@+id/evento_definir"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintVertical_bias="0.0"
+            android:layout_marginRight="15dp" />
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/evento_definir"
-            android:layout_width="@dimen/fab_item_menu"
-            android:layout_height="@dimen/fab_item_menu"
+            android:layout_width="@dimen/fab_item_simples"
+            android:layout_height="@dimen/fab_item_simples"
             android:onClick="dialogoEvento"
             android:scaleType="center"
             android:src="@drawable/ic_location_on"
@@ -221,21 +234,23 @@
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/cont_chave_acesso"
-        android:layout_width="305dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
         android:orientation="horizontal"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/menu"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent">
 
         <TextView
             android:id="@+id/lblChaveAcesso"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/fab_item_menu"
+            android:layout_width="156dp"
+            android:layout_height="@dimen/fab_item_simples"
             android:layout_marginEnd="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginTop="8dp"
             android:background="@drawable/forma_fab_tooltip"
             android:gravity="center|end"
             android:padding="8dp"
@@ -244,27 +259,34 @@
             android:textColor="@color/fab_font_color"
             android:textSize="@dimen/fab_font_size"
             android:visibility="visible"
-            app:layout_constraintBottom_toBottomOf="@+id/codigo_definir"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/codigo_definir"
-            app:layout_constraintTop_toTopOf="@+id/codigo_definir" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginRight="16dp" />
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/codigo_definir"
-            android:layout_width="@dimen/fab_item_menu"
-            android:layout_height="@dimen/fab_item_menu"
+            android:layout_width="@dimen/fab_item_simples"
+            android:layout_height="@dimen/fab_item_simples"
+            android:maxHeight="@dimen/fab_item_simples"
+            android:minHeight="@dimen/fab_item_simples"
             android:onClick="dialogoCodigo"
             android:scaleType="center"
             android:src="@drawable/ic_vpn_key"
             android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/lblChaveAcesso"
             app:layout_constraintTop_toTopOf="parent" />
 
     </android.support.constraint.ConstraintLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/proximo"
-        android:layout_width="@dimen/fab_item_menu"
-        android:layout_height="@dimen/fab_item_menu"
+        android:layout_width="@dimen/fab_item_simples"
+        android:layout_height="@dimen/fab_item_simples"
+        android:layout_marginBottom="8dp"
         android:onClick="proximoQrcode"
         android:scaleType="center"
         android:src="@drawable/ic_ok"
