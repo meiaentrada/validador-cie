@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -74,8 +75,6 @@ import android.content.BroadcastReceiver;
 
 import java.text.Normalizer;
 
-import android.support.v4.content.ContextCompat;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,8 +105,10 @@ import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
 import br.org.meiaentrada.validadorcie.service.BarcodeService;
 import br.org.meiaentrada.validadorcie.service.CertificadoService;
 import br.org.meiaentrada.validadorcie.service.ToastService;
+import br.org.meiaentrada.validadorcie.util.AnimationUtil;
 import br.org.meiaentrada.validadorcie.util.CpfUtil;
 import br.org.meiaentrada.validadorcie.util.HashUtil;
+import br.org.meiaentrada.validadorcie.util.PermissionsUtil;
 import br.org.meiaentrada.validadorcie.util.StringContentEncoder;
 
 
@@ -157,6 +158,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     ConstraintLayout contCpf, contEvento, contChave, contCodData;
 
+    List<View> menuContainers;
+
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -196,6 +199,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         animFabRotateClock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
         animFabRotateAntiClock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
 
+        menuContainers = new ArrayList<View>(Arrays.asList(contChave, contEvento, contCpf, contCodData));
+
         fabMenu.setOnClickListener(view -> {
 
             if (isMenuOpen)
@@ -205,7 +210,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         });
 
-        if (checkAndRequestPermissions()) {
+        while (!PermissionsUtil.checarPermissoes(this)){
+        }
 
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             criteria = new Criteria();
@@ -240,8 +246,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     try {
 
                         int rc = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA);
-                        if (rc == PackageManager.PERMISSION_GRANTED)
+                        if (rc == PackageManager.PERMISSION_GRANTED) {
                             cameraSource.start(cameraView.getHolder());
+                        }
 
                     } catch (IOException ex) {
 
@@ -257,9 +264,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                 @Override
                 public void surfaceDestroyed(SurfaceHolder holder) {
-
                     cameraSource.stop();
-
                 }
 
             });
@@ -281,11 +286,13 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                             cameraSource.stop();
                             cameraView.setVisibility(View.GONE);
-                            fabEvento.setVisibility(View.GONE);
-                            fabCodigoAcesso.setVisibility(View.GONE);
-                            fabCpf.setVisibility(View.GONE);
+
+                            contEvento.setVisibility(View.GONE);
+                            contChave.setVisibility(View.GONE);
+                            contCpf.setVisibility(View.GONE);
+                            contCodData.setVisibility(View.GONE);
+
                             evento.setVisibility(View.GONE);
-                            fabCodigoDataNascimento.setVisibility(View.GONE);
 
                             ConstraintSet set = new ConstraintSet();
                             set.clone(layout1);
@@ -296,8 +303,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                             set.applyTo(layout1);
 
                             eventoCfg = sharedPref.getString("evento", "");
-                            if (eventoCfg.isEmpty())
-                                eventoCfg = "Evento indefinido";
+                            if (eventoCfg.isEmpty()) {
+                                eventoCfg = getString(R.string.evento_indefinido);
+                            }
 
                             BarcodeType barcodeType = BarcodeService.getBarcodeType(document);
 
@@ -407,8 +415,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 }
             });
 
-        }
-
     }
 
     @Override
@@ -449,7 +455,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     @Override
     public void onStart() {
-
         super.onStart();
 
     }
@@ -464,56 +469,19 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     @Override
     public void onPause() {
-
         unregisterReceiver(networkStateReceiver);
         super.onPause();
-
-    }
-
-    //Checa e solicita permissoes de acesso
-    private boolean checkAndRequestPermissions() {
-
-        int camera = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-        int intern = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
-        int acl = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-        int rps = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE);
-        int ans = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE);
-        int aws = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_WIFI_STATE);
-        List<String> listPermissionsNeeded = new ArrayList<>();
-
-        if (camera != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.CAMERA);
-        if (intern != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.INTERNET);
-        if (rps != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.READ_PHONE_STATE);
-        if (ans != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.ACCESS_NETWORK_STATE);
-        if (aws != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.ACCESS_WIFI_STATE);
-        if (acl != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-
-        if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), 1);
-            return checkAndRequestPermissions();
-        }
-        return true;
-
     }
 
     // remove acentos de uma string
     public static String stripAccents(String input) {
-
         return input == null ? null :
                 Normalizer.normalize(input, Normalizer.Form.NFD)
                         .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-
     }
 
     // verifica mudancas de estado de conectividade
     private BroadcastReceiver networkStateReceiver = new BroadcastReceiver() {
-
         @Override
         public void onReceive(Context context, Intent intent) {
 
@@ -663,9 +631,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         }
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setTitle("Evento");
+        alertDialogBuilder.setTitle(R.string.evento);
         final EditText et = new EditText(this);
-        et.setHint("Informe o nome do evento");
+        et.setHint(R.string.informe_codigo_evento);
         et.getBackground().mutate().setColorFilter(getResources().getColor(R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
 
         alertDialogBuilder.setView(et);
@@ -716,7 +684,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder
                 .setView(layout)
-                .setTitle("Código de Acesso")
+                .setTitle(R.string.codigo_acesso)
                 .setPositiveButton(R.string.dialog_ok, (d, id) -> {
 
                     EditText editChaveAcesso = layout.findViewById(R.id.editChaveAcesso);
@@ -752,12 +720,10 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 });
 
                         queue.add(jsObjRequest);
-                        ToastService.showToast("Código de acesso salvo.", getApplicationContext());
+                        ToastService.showToast(getString(R.string.codigo_acesso_salvo), getApplicationContext());
 
                     } else {
-
-                        ToastService.showToast("Código de acesso em branco.", getApplicationContext());
-
+                        ToastService.showToast(getString(R.string.codigo_acesso_em_branco), getApplicationContext());
                     }
 
 
@@ -778,10 +744,10 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         foto.setVisibility(View.GONE);
         prox.setVisibility(View.GONE);
         cameraView.setVisibility(View.VISIBLE);
-        fabEvento.setVisibility(View.VISIBLE);
-        fabCodigoAcesso.setVisibility(View.VISIBLE);
+        contEvento.setVisibility(View.VISIBLE);
+        contChave.setVisibility(View.VISIBLE);
         evento.setVisibility(View.VISIBLE);
-        fabCpf.setVisibility(View.VISIBLE);
+        contCpf.setVisibility(View.VISIBLE);
 
         try {
 
@@ -789,7 +755,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             if (rc == PackageManager.PERMISSION_GRANTED) {
                 cameraSource.start(cameraView.getHolder());
             }
-
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -805,9 +770,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            fabEvento.setVisibility(View.GONE);
-            fabCodigoAcesso.setVisibility(View.GONE);
-            fabCpf.setVisibility(View.GONE);
+            contEvento.setVisibility(View.GONE);
+            contChave.setVisibility(View.GONE);
+            contCpf.setVisibility(View.GONE);
             evento.setVisibility(View.GONE);
 
             ConstraintSet set = new ConstraintSet();
@@ -850,7 +815,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                             e.printStackTrace();
                             fotop.setVisibility(View.GONE);
                             barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                            barcodeValue.setText("\nErro de conectividade, tente novamente\n");
+                            barcodeValue.setText("\n"+R.string.erro_conectividade+"\n");
                             prox.setVisibility(View.VISIBLE);
 
                         }
@@ -859,7 +824,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                         fotop.setVisibility(View.GONE);
                         barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                        barcodeValue.setText("\nErro de conectividade, tente novamente\n");
+                        barcodeValue.setText("\n"+R.string.erro_conectividade+"\n");
                         prox.setVisibility(View.VISIBLE);
 
                     }
@@ -879,7 +844,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             queue.add(postRequest);
 
         } else {
-            dialogoAviso("Sem conectividade");
+            dialogoAviso(getString(R.string.sem_conectividade));
         }
 
     }
@@ -892,9 +857,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            fabEvento.setVisibility(View.GONE);
-            fabCodigoAcesso.setVisibility(View.GONE);
-            fabCpf.setVisibility(View.GONE);
+            contEvento.setVisibility(View.GONE);
+            contChave.setVisibility(View.GONE);
+            contCpf.setVisibility(View.GONE);
             evento.setVisibility(View.GONE);
 
             ConstraintSet set = new ConstraintSet();
@@ -948,18 +913,19 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     e.printStackTrace();
                     fotop.setVisibility(View.GONE);
                     barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                    barcodeValue.setText("\nErro de conectividade, tente novamente\n");
+                    barcodeValue.setText("\n"+R.string.erro_conectividade+"\n");
                     prox.setVisibility(View.VISIBLE);
 
                 }
             }, error -> {
 
-                fotop.setVisibility(View.GONE);
-                barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                barcodeValue.setText("\nErro de conectividade, tente novamente\n");
-                prox.setVisibility(View.VISIBLE);
+                        fotop.setVisibility(View.GONE);
+                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                        barcodeValue.setText("\n"+R.string.erro_conectividade+"\n");
+                        prox.setVisibility(View.VISIBLE);
 
-            }) {
+                    }
+            ) {
 
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
@@ -972,7 +938,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             queue.add(postRequest);
 
         } else {
-            dialogoAviso("Sem conectividade");
+            dialogoAviso(getString(R.string.sem_conectividade));
         }
 
     }
@@ -1286,10 +1252,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     private void closeMenu() {
 
-        contChave.startAnimation(animFabClose);
-        contEvento.startAnimation(animFabClose);
-        contCpf.startAnimation(animFabClose);
-        contCodData.startAnimation(animFabClose);
+        AnimationUtil.addAnimation(menuContainers, animFabClose);
 
         fabMenu.startAnimation(animFabRotateAntiClock);
 
@@ -1317,10 +1280,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     private void openMenu() {
 
-        contChave.startAnimation(animFabOpen);
-        contEvento.startAnimation(animFabOpen);
-        contCpf.startAnimation(animFabOpen);
-        contCodData.startAnimation(animFabOpen);
+        AnimationUtil.addAnimation(menuContainers, animFabOpen);
 
         fabMenu.startAnimation(animFabRotateClock);
 
