@@ -240,6 +240,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 .build();
 
         cameraView.getHolder().addCallback(new SurfaceHolder.Callback() {
+
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
 
