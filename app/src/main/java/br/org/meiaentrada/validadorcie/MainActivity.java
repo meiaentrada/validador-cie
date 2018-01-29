@@ -257,7 +257,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                 @Override
                 public void surfaceDestroyed(SurfaceHolder holder) {
+
                     cameraSource.stop();
+
                 }
 
             });
