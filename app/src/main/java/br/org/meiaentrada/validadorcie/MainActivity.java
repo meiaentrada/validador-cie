@@ -613,6 +613,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     String codigoUso = edtCodigoUso.getText().toString();
                     String dataNascimento = editDataNascimento.getText().toString();
 
+                    String[] dateArray = dataNascimento.split("/");
+                    dataNascimento = String.format("%s-%s-%s", dateArray[2], dateArray[1], dateArray[0]);
+
                     validaCodigoUsoDataNascimento(codigoUso, dataNascimento);
 
                 }).setNegativeButton(R.string.dialog_cancel, (d, id) -> {
