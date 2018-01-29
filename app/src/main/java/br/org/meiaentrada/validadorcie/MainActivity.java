@@ -98,7 +98,6 @@ import com.android.volley.AuthFailureError;
 
 import android.util.DisplayMetrics;
 
-import br.org.meiaentrada.validadorcie.components.DateInputMask;
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
 import br.org.meiaentrada.validadorcie.model.ItemCaptura;
 import br.org.meiaentrada.validadorcie.model.RetornoValidacao;
@@ -199,35 +198,10 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         fabMenu.setOnClickListener(view -> {
 
-            if (isMenuOpen) {
-                contChave.startAnimation(animFabClose);
-                contEvento.startAnimation(animFabClose);
-                contCpf.startAnimation(animFabClose);
-                contCodData.startAnimation(animFabClose);
-
-                fabMenu.startAnimation(animFabRotateAntiClock);
-
-                fabCodigoAcesso.setClickable(false);
-                fabEvento.setClickable(false);
-                fabCpf.setClickable(false);
-                fabCodigoDataNascimento.setClickable(false);
-
-                isMenuOpen = false;
-            } else {
-                contChave.startAnimation(animFabOpen);
-                contEvento.startAnimation(animFabOpen);
-                contCpf.startAnimation(animFabOpen);
-                contCodData.startAnimation(animFabOpen);
-
-                fabMenu.startAnimation(animFabRotateClock);
-
-                fabCodigoAcesso.setClickable(true);
-                fabEvento.setClickable(true);
-                fabCpf.setClickable(true);
-                fabCodigoDataNascimento.setClickable(true);
-
-                isMenuOpen = true;
-            }
+            if (isMenuOpen)
+                closeMenu();
+            else
+                openMenu();
 
         });
 
@@ -367,6 +341,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                             prox.setVisibility(View.VISIBLE);
 
                                     }
+                                    closeMenuWithoutAnimation();
 
                                     db.adicionaCaptura("", validacaoDTO.getStatus(), ts, eventoCfg);
 
@@ -792,7 +767,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         alerta.show();
 
     }
-
 
     // proximo qr_code
     public void proximoQrcode(View view) {
@@ -1299,12 +1273,61 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             calendar.set(Calendar.DAY_OF_MONTH, day);
 
             Date date = calendar.getTime();
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-mm-yyyy");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
             editDataNascimento.setText(simpleDateFormat.format(date));
 
         }, ano, mes, dia);
         datePickerDialog.show();
+
+    }
+
+    private void closeMenu() {
+
+        contChave.startAnimation(animFabClose);
+        contEvento.startAnimation(animFabClose);
+        contCpf.startAnimation(animFabClose);
+        contCodData.startAnimation(animFabClose);
+
+        fabMenu.startAnimation(animFabRotateAntiClock);
+
+        fabCodigoAcesso.setClickable(false);
+        fabEvento.setClickable(false);
+        fabCpf.setClickable(false);
+        fabCodigoDataNascimento.setClickable(false);
+
+        isMenuOpen = false;
+
+    }
+
+    private void closeMenuWithoutAnimation() {
+
+        fabMenu.startAnimation(animFabRotateAntiClock);
+
+        fabCodigoAcesso.setClickable(false);
+        fabEvento.setClickable(false);
+        fabCpf.setClickable(false);
+        fabCodigoDataNascimento.setClickable(false);
+
+        isMenuOpen = false;
+
+    }
+
+    private void openMenu() {
+
+        contChave.startAnimation(animFabOpen);
+        contEvento.startAnimation(animFabOpen);
+        contCpf.startAnimation(animFabOpen);
+        contCodData.startAnimation(animFabOpen);
+
+        fabMenu.startAnimation(animFabRotateClock);
+
+        fabCodigoAcesso.setClickable(true);
+        fabEvento.setClickable(true);
+        fabCpf.setClickable(true);
+        fabCodigoDataNascimento.setClickable(true);
+
+        isMenuOpen = true;
 
     }
 

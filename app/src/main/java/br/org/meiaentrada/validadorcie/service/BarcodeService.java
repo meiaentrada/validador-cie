@@ -12,7 +12,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-
 import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
 
 
@@ -49,10 +48,6 @@ public class BarcodeService {
                 .replace("http://", "")
                 .replace("https://", "")
                 .replace("www.", "");
-
-//        String[] fields = barcodeData
-//                .replaceAll("(cdne.com.br/)(.+?(?=[^A-Z]))/\\-*\\d+", "$2;$3")
-//                .split(";");
 
         String[] fields = barcodeData.split("/");
 
