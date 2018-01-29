@@ -3,7 +3,6 @@ package br.org.meiaentrada.validadorcie;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.DateFormat;
-import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -11,8 +10,6 @@ import java.util.Map;
 import java.util.HashMap;
 
 import android.app.DatePickerDialog;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -23,9 +20,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.text.Layout;
-import android.text.TextWatcher;
-import android.text.format.DateUtils;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.util.Log;
@@ -33,7 +27,6 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.net.ConnectivityManager;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -104,8 +97,6 @@ import com.android.volley.AuthFailureError;
 
 import android.util.DisplayMetrics;
 
-import br.org.meiaentrada.validadorcie.components.DateInputMask;
-import br.org.meiaentrada.validadorcie.components.DatePickerFragment;
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
 import br.org.meiaentrada.validadorcie.model.ItemCaptura;
 import br.org.meiaentrada.validadorcie.model.RetornoValidacao;
@@ -113,7 +104,6 @@ import br.org.meiaentrada.validadorcie.model.ValidacaoDTO;
 import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
 import br.org.meiaentrada.validadorcie.service.BarcodeService;
 import br.org.meiaentrada.validadorcie.service.CertificadoService;
-import br.org.meiaentrada.validadorcie.service.HttpService;
 import br.org.meiaentrada.validadorcie.service.ToastService;
 import br.org.meiaentrada.validadorcie.util.CpfUtil;
 import br.org.meiaentrada.validadorcie.util.HashUtil;
@@ -181,9 +171,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 //                View.inflate(this, R.layout.dialog_validar_codigo_uso_data_nascimento, null);
 //        EditText editDataNascimento = layoutDialogValidarCodigoUsoDataNascimento.findViewById(R.id.dataNacimento);
 //        editDataNascimento.setOnFocusChangeListener(new ShowDatePickerListener());
-
 //        editDataNascimento.addTextChangedListener(new DateInputMask(editDataNascimento));
-
 //        codigoUsoDataNascimentoActivity.editDataNascimento.;
 
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
