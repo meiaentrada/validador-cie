@@ -210,210 +210,210 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         });
 
-        while (!PermissionsUtil.checarPermissoes(this)){
+        while (!PermissionsUtil.checarPermissoes(this)) {
         }
 
-            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            criteria = new Criteria();
-            criteria.setAccuracy(Criteria.ACCURACY_COARSE);
-            criteria.setCostAllowed(false);
-            provider = locationManager.getBestProvider(criteria, false);
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+        criteria.setCostAllowed(false);
+        provider = locationManager.getBestProvider(criteria, false);
 
-            int rcl = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION);
-            if (rcl == PackageManager.PERMISSION_GRANTED) {
+        int rcl = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION);
+        if (rcl == PackageManager.PERMISSION_GRANTED) {
 
-                Location location = locationManager.getLastKnownLocation(provider);
-                mylistener = new MyLocationListener();
-                if (location != null)
-                    mylistener.onLocationChanged(location);
-                locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
+            Location location = locationManager.getLastKnownLocation(provider);
+            mylistener = new MyLocationListener();
+            if (location != null)
+                mylistener.onLocationChanged(location);
+            locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
+
+        }
+
+        barcodeDetector = new BarcodeDetector.Builder(this)
+                .setBarcodeFormats(Barcode.QR_CODE)
+                .build();
+
+        cameraSource = new CameraSource.Builder(this, barcodeDetector)
+                .setRequestedPreviewSize(1600, 1024)
+                .setAutoFocusEnabled(true)
+                .build();
+
+        cameraView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+
+                try {
+
+                    int rc = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA);
+                    if (rc == PackageManager.PERMISSION_GRANTED) {
+                        cameraSource.start(cameraView.getHolder());
+                    }
+
+                } catch (IOException ex) {
+
+                    ex.printStackTrace();
+
+                }
 
             }
 
-            barcodeDetector = new BarcodeDetector.Builder(this)
-                    .setBarcodeFormats(Barcode.QR_CODE)
-                    .build();
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            }
 
-            cameraSource = new CameraSource.Builder(this, barcodeDetector)
-                    .setRequestedPreviewSize(1600, 1024)
-                    .setAutoFocusEnabled(true)
-                    .build();
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                cameraSource.stop();
+            }
 
-            cameraView.getHolder().addCallback(new SurfaceHolder.Callback() {
-                @Override
-                public void surfaceCreated(SurfaceHolder holder) {
+        });
 
-                    try {
+        // detecta o QR code
+        barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
 
-                        int rc = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA);
-                        if (rc == PackageManager.PERMISSION_GRANTED) {
-                            cameraSource.start(cameraView.getHolder());
+            @Override
+            public void release() {
+            }
+
+            @Override
+            public void receiveDetections(Detector.Detections<Barcode> detections) {
+                final SparseArray<Barcode> barcodes = detections.getDetectedItems();
+                if (barcodes.size() != 0) {
+                    barcodeValue.post(() -> {
+
+                        String document = barcodes.valueAt(0).displayValue;
+
+                        cameraSource.stop();
+                        cameraView.setVisibility(View.GONE);
+
+                        contEvento.setVisibility(View.GONE);
+                        contChave.setVisibility(View.GONE);
+                        contCpf.setVisibility(View.GONE);
+                        contCodData.setVisibility(View.GONE);
+
+                        evento.setVisibility(View.GONE);
+
+                        ConstraintSet set = new ConstraintSet();
+                        set.clone(layout1);
+                        set.clear(barcodeValue.getId(), ConstraintSet.TOP);
+                        set.clear(barcodeValue.getId(), ConstraintSet.BOTTOM);
+                        set.connect(barcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
+                        set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
+                        set.applyTo(layout1);
+
+                        eventoCfg = sharedPref.getString("evento", "");
+                        if (eventoCfg.isEmpty()) {
+                            eventoCfg = getString(R.string.evento_indefinido);
                         }
 
-                    } catch (IOException ex) {
+                        BarcodeType barcodeType = BarcodeService.getBarcodeType(document);
 
-                        ex.printStackTrace();
+                        if (barcodeType == BarcodeType.CDNE_URL) {
 
-                    }
+                            String[] fields =
+                                    BarcodeService.getCodigoAndDataNascimento(document);
 
-                }
+                            String codigoUso = fields[0];
+                            String dataNascimento = fields[1];
+                            String codigoAcesso = sharedPref.getString("codigo", "");
+                            String evento = sharedPref.getString("evento", "");
 
-                @Override
-                public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                }
-
-                @Override
-                public void surfaceDestroyed(SurfaceHolder holder) {
-                    cameraSource.stop();
-                }
-
-            });
-
-            // detecta o QR code
-            barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
-
-                @Override
-                public void release() {
-                }
-
-                @Override
-                public void receiveDetections(Detector.Detections<Barcode> detections) {
-                    final SparseArray<Barcode> barcodes = detections.getDetectedItems();
-                    if (barcodes.size() != 0) {
-                        barcodeValue.post(() -> {
-
-                            String document = barcodes.valueAt(0).displayValue;
-
-                            cameraSource.stop();
-                            cameraView.setVisibility(View.GONE);
-
-                            contEvento.setVisibility(View.GONE);
-                            contChave.setVisibility(View.GONE);
-                            contCpf.setVisibility(View.GONE);
-                            contCodData.setVisibility(View.GONE);
-
-                            evento.setVisibility(View.GONE);
-
-                            ConstraintSet set = new ConstraintSet();
-                            set.clone(layout1);
-                            set.clear(barcodeValue.getId(), ConstraintSet.TOP);
-                            set.clear(barcodeValue.getId(), ConstraintSet.BOTTOM);
-                            set.connect(barcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
-                            set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
-                            set.applyTo(layout1);
-
-                            eventoCfg = sharedPref.getString("evento", "");
-                            if (eventoCfg.isEmpty()) {
-                                eventoCfg = getString(R.string.evento_indefinido);
+                            try {
+                                evento = URLEncoder.encode(evento, "UTF-8");
+                            } catch (UnsupportedEncodingException e) {
+                                e.printStackTrace();
                             }
 
-                            BarcodeType barcodeType = BarcodeService.getBarcodeType(document);
+                            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+                            StringRequest stringRequest = new StringRequest(Request.Method.GET,
+                                    GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
+                                            "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
 
-                            if (barcodeType == BarcodeType.CDNE_URL) {
+                                Long tsLong = System.currentTimeMillis() / 1000;
+                                String ts = tsLong.toString();
 
-                                String[] fields =
-                                        BarcodeService.getCodigoAndDataNascimento(document);
-
-                                String codigoUso = fields[0];
-                                String dataNascimento = fields[1];
-                                String codigoAcesso = sharedPref.getString("codigo", "");
-                                String evento = sharedPref.getString("evento", "");
-
-                                try {
-                                    evento = URLEncoder.encode(evento, "UTF-8");
-                                } catch (UnsupportedEncodingException e) {
-                                    e.printStackTrace();
-                                }
-
-                                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-                                StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                                        GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
-                                                "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
-
-                                    Long tsLong = System.currentTimeMillis() / 1000;
-                                    String ts = tsLong.toString();
-
-                                    ValidacaoDTO validacaoDTO = jsonParser.fromJson(response, ValidacaoDTO.class);
-                                    if (!validacaoDTO.getStatus()) {
-
-                                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                                        barcodeValue.setText("Documento Invalido!");
-                                        prox.setVisibility(View.VISIBLE);
-
-                                    } else {
-
-                                        barcodeValue.setTextColor(Color.rgb(0, 255, 0));
-                                        barcodeValue.setText("Documento Valido!");
-
-                                        if (verificaSinalDados())
-                                            downloadImagem(validacaoDTO.getFoto());
-                                        else
-                                            prox.setVisibility(View.VISIBLE);
-
-                                    }
-                                    closeMenuWithoutAnimation();
-
-                                    db.adicionaCaptura("", validacaoDTO.getStatus(), ts, eventoCfg);
-
-                                }, error -> Log.e(MainActivity.class.getName(), error.getMessage()));
-
-                                queue.add(stringRequest);
-
-                            } else {
-
-                                RetornoValidacao emissor = pegaEmissor(document);
-
-                                if (emissor.getErro()) {
+                                ValidacaoDTO validacaoDTO = jsonParser.fromJson(response, ValidacaoDTO.class);
+                                if (!validacaoDTO.getStatus()) {
 
                                     barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                                    Long tsLong = System.currentTimeMillis() / 1000;
-                                    String ts = tsLong.toString();
-                                    db.adicionaCaptura(document, emissor.getErro(), ts, eventoCfg);
-                                    barcodeValue.setText(emissor.getResultado());
+                                    barcodeValue.setText("Documento Invalido!");
                                     prox.setVisibility(View.VISIBLE);
 
                                 } else {
 
-                                    String emissor_chave = emissor.getResultado().concat("_chave");
-                                    String emissor_crl = emissor.getResultado().concat("_crl");
+                                    barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                    barcodeValue.setText("Documento Valido!");
 
-                                    chavepublicaOrigem = sharedPref.getString(emissor_chave, "");
-                                    crlOrigem = sharedPref.getString(emissor_crl, "");
-
-                                    RetornoValidacao resultado_valida = certificadoService.validaCertificado(document, chavepublicaOrigem, crlOrigem);
-
-                                    if (resultado_valida.getErro()) {
-
-                                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                    if (verificaSinalDados())
+                                        downloadImagem(validacaoDTO.getFoto());
+                                    else
                                         prox.setVisibility(View.VISIBLE);
 
+                                }
+                                closeMenuWithoutAnimation();
+
+                                db.adicionaCaptura("", validacaoDTO.getStatus(), ts, eventoCfg);
+
+                            }, error -> Log.e(MainActivity.class.getName(), error.getMessage()));
+
+                            queue.add(stringRequest);
+
+                        } else {
+
+                            RetornoValidacao emissor = pegaEmissor(document);
+
+                            if (emissor.getErro()) {
+
+                                barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                Long tsLong = System.currentTimeMillis() / 1000;
+                                String ts = tsLong.toString();
+                                db.adicionaCaptura(document, emissor.getErro(), ts, eventoCfg);
+                                barcodeValue.setText(emissor.getResultado());
+                                prox.setVisibility(View.VISIBLE);
+
+                            } else {
+
+                                String emissor_chave = emissor.getResultado().concat("_chave");
+                                String emissor_crl = emissor.getResultado().concat("_crl");
+
+                                chavepublicaOrigem = sharedPref.getString(emissor_chave, "");
+                                crlOrigem = sharedPref.getString(emissor_crl, "");
+
+                                RetornoValidacao resultado_valida = certificadoService.validaCertificado(document, chavepublicaOrigem, crlOrigem);
+
+                                if (resultado_valida.getErro()) {
+
+                                    barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                    prox.setVisibility(View.VISIBLE);
+
+                                } else {
+
+                                    barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+
+                                    if (verificaSinalDados()) {
+
+                                        String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(document) + "/image.jpg";
+                                        downloadImagem(urlimagem);
+
                                     } else {
-
-                                        barcodeValue.setTextColor(Color.rgb(0, 255, 0));
-
-                                        if (verificaSinalDados()) {
-
-                                            String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(document) + "/image.jpg";
-                                            downloadImagem(urlimagem);
-
-                                        } else {
-                                            prox.setVisibility(View.VISIBLE);
-                                        }
-
+                                        prox.setVisibility(View.VISIBLE);
                                     }
-
-                                    Long tsLong = System.currentTimeMillis() / 1000;
-                                    String ts = tsLong.toString();
-                                    db.adicionaCaptura(document, resultado_valida.getErro(), ts, eventoCfg);
-                                    barcodeValue.setText(resultado_valida.getResultado());
 
                                 }
 
+                                Long tsLong = System.currentTimeMillis() / 1000;
+                                String ts = tsLong.toString();
+                                db.adicionaCaptura(document, resultado_valida.getErro(), ts, eventoCfg);
+                                barcodeValue.setText(resultado_valida.getResultado());
+
                             }
-                        });
-                    }
+
+                        }
+                    });
                 }
-            });
+            }
+        });
 
     }
 
@@ -812,14 +812,16 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 prox.setVisibility(View.VISIBLE);
 
                             }
+                            closeMenuWithoutAnimation();
 
                         } catch (Exception e) {
 
                             e.printStackTrace();
                             fotop.setVisibility(View.GONE);
                             barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                            barcodeValue.setText("\n"+R.string.erro_conectividade+"\n");
+                            barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                             prox.setVisibility(View.VISIBLE);
+                            closeMenuWithoutAnimation();
 
                         }
                     },
@@ -827,8 +829,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                         fotop.setVisibility(View.GONE);
                         barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                        barcodeValue.setText("\n"+R.string.erro_conectividade+"\n");
+                        barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                         prox.setVisibility(View.VISIBLE);
+                        closeMenuWithoutAnimation();
 
                     }
             ) {
@@ -910,25 +913,28 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                         prox.setVisibility(View.VISIBLE);
 
                     }
+                    closeMenuWithoutAnimation();
 
                 } catch (Exception e) {
 
                     e.printStackTrace();
                     fotop.setVisibility(View.GONE);
                     barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                    barcodeValue.setText("\n"+R.string.erro_conectividade+"\n");
+                    barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                     prox.setVisibility(View.VISIBLE);
+                    closeMenuWithoutAnimation();
 
                 }
+
             }, error -> {
 
-                        fotop.setVisibility(View.GONE);
-                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                        barcodeValue.setText("\n"+R.string.erro_conectividade+"\n");
-                        prox.setVisibility(View.VISIBLE);
+                fotop.setVisibility(View.GONE);
+                barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
+                prox.setVisibility(View.VISIBLE);
+                closeMenuWithoutAnimation();
 
-                    }
-            ) {
+            }) {
 
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
