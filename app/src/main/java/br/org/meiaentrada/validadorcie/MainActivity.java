@@ -2,9 +2,17 @@ package br.org.meiaentrada.validadorcie;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.DateFormat;
+import java.time.LocalDate;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Map;
 import java.util.HashMap;
 
+import android.app.DatePickerDialog;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -15,9 +23,13 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.text.Layout;
+import android.text.TextWatcher;
+import android.text.format.DateUtils;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.util.Log;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.net.ConnectivityManager;
 import android.widget.ImageView;
@@ -92,6 +104,8 @@ import com.android.volley.AuthFailureError;
 
 import android.util.DisplayMetrics;
 
+import br.org.meiaentrada.validadorcie.components.DateInputMask;
+import br.org.meiaentrada.validadorcie.components.DatePickerFragment;
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
 import br.org.meiaentrada.validadorcie.model.ItemCaptura;
 import br.org.meiaentrada.validadorcie.model.RetornoValidacao;
@@ -106,7 +120,7 @@ import br.org.meiaentrada.validadorcie.util.HashUtil;
 import br.org.meiaentrada.validadorcie.util.StringContentEncoder;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener {
 
     BarcodeDetector barcodeDetector;
     String eventoCfg;
@@ -152,11 +166,25 @@ public class MainActivity extends AppCompatActivity {
 
 
     ConstraintLayout contCpf, contEvento, contChave, contCodData;
+
+    View layoutDialogValidarCodigoUsoDataNascimento;
+
+    CodigoUsoDataNascimentoActivity codigoUsoDataNascimentoActivity = new CodigoUsoDataNascimentoActivity();
+
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
 
         setContentView(R.layout.activity_main);
+
+//        layoutDialogValidarCodigoUsoDataNascimento =
+//                View.inflate(this, R.layout.dialog_validar_codigo_uso_data_nascimento, null);
+//        EditText editDataNascimento = layoutDialogValidarCodigoUsoDataNascimento.findViewById(R.id.dataNacimento);
+//        editDataNascimento.setOnFocusChangeListener(new ShowDatePickerListener());
+
+//        editDataNascimento.addTextChangedListener(new DateInputMask(editDataNascimento));
+
+//        codigoUsoDataNascimentoActivity.editDataNascimento.;
 
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         eventoCfg = sharedPref.getString("evento", "");
@@ -426,6 +454,14 @@ public class MainActivity extends AppCompatActivity {
             });
 
         }
+
+    }
+
+    @Override
+    public void onDateSet(DatePicker view, int year, int month, int day) {
+
+        Calendar cal = new GregorianCalendar(year, month, day);
+        setDate(cal);
 
     }
 
@@ -956,16 +992,14 @@ public class MainActivity extends AppCompatActivity {
                     prox.setVisibility(View.VISIBLE);
 
                 }
-            },
-                    error -> {
+            }, error -> {
 
-                        fotop.setVisibility(View.GONE);
-                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                        barcodeValue.setText("\nErro de conectividade, tente novamente\n");
-                        prox.setVisibility(View.VISIBLE);
+                fotop.setVisibility(View.GONE);
+                barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                barcodeValue.setText("\nErro de conectividade, tente novamente\n");
+                prox.setVisibility(View.VISIBLE);
 
-                    }
-            ) {
+            }) {
 
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
@@ -1252,6 +1286,66 @@ public class MainActivity extends AppCompatActivity {
             db.close();
 
             return item;
+        }
+
+    }
+
+    private void setDate(final Calendar calendar) {
+
+        final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM);
+
+        final View layout = View.inflate(this, R.layout.dialog_validar_codigo_uso_data_nascimento, null);
+        EditText editDataNascimento = layout.findViewById(R.id.dataNacimento);
+        editDataNascimento.setText(dateFormat.format(calendar.getTime()));
+
+    }
+
+    public void showDatePickerDialog(View view) {
+
+//        DatePickerFragment fragment = new DatePickerFragment();
+//        fragment.show(this.getSupportFragmentManager(), "");
+
+    }
+
+    public void showDatePicker() {
+
+        Calendar calendario = Calendar.getInstance();
+        int dia = calendario.get(Calendar.DAY_OF_MONTH);
+        int mes = calendario.get(Calendar.MONTH);
+        int ano = calendario.get(Calendar.YEAR);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, month, day) -> {
+
+            final View layout = View.inflate(this, R.layout.dialog_validar_codigo_uso_data_nascimento, null);
+            EditText editDataNascimento = layout.findViewById(R.id.dataNacimento);
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.YEAR, year);
+            calendar.set(Calendar.MONTH, month);
+            calendar.set(Calendar.DAY_OF_MONTH, day);
+
+            Date date = calendar.getTime();
+            editDataNascimento.setText(date.toString());
+
+        }, ano, mes, dia);
+        datePickerDialog.show();
+
+    }
+
+    private class ShowDatePickerListener
+            implements View.OnFocusChangeListener, View.OnClickListener {
+
+        @Override
+        public void onFocusChange(View v, boolean hasFocus) {
+
+            if (hasFocus)
+                showDatePicker();
+
+        }
+
+        @Override
+        public void onClick(View v) {
+            showDatePicker();
         }
 
     }

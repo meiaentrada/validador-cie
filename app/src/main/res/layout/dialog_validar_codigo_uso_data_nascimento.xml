@@ -25,7 +25,6 @@
         android:layout_marginTop="16dp"
         android:fontFamily="sans-serif"
         android:hint="@string/dt_nascimento"
-        android:inputType="date"
-        android:onClick="showDatePickerDialog" />
+        android:inputType="text" />
 
 </LinearLayout>
