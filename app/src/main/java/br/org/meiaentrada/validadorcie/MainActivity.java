@@ -195,30 +195,31 @@ public class MainActivity extends AppCompatActivity {
 
             if (isMenuOpen) {
                 contChave.startAnimation(animFabClose);
-                contCpf.startAnimation(animFabClose);
                 contEvento.startAnimation(animFabClose);
+                contCpf.startAnimation(animFabClose);
                 contCodData.startAnimation(animFabClose);
 
                 fabMenu.startAnimation(animFabRotateAntiClock);
 
                 fabCodigoAcesso.setClickable(false);
+                fabEvento.setClickable(false);
                 fabCpf.setClickable(false);
                 fabCodigoDataNascimento.setClickable(false);
-                fabEvento.setClickable(false);
 
                 isMenuOpen = false;
             } else {
                 contChave.startAnimation(animFabOpen);
-                contCpf.startAnimation(animFabOpen);
                 contEvento.startAnimation(animFabOpen);
+                contCpf.startAnimation(animFabOpen);
                 contCodData.startAnimation(animFabOpen);
 
                 fabMenu.startAnimation(animFabRotateClock);
 
                 fabCodigoAcesso.setClickable(true);
-                fabCpf.setClickable(true);
                 fabEvento.setClickable(true);
+                fabCpf.setClickable(true);
                 fabCodigoDataNascimento.setClickable(true);
+
                 isMenuOpen = true;
             }
 
