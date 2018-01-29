@@ -1,6 +1,8 @@
 package br.org.meiaentrada.validadorcie.model;
 
 
+import br.org.meiaentrada.validadorcie.util.HashUtil;
+
 public class ItemCaptura {
 
     private String id;
@@ -11,6 +13,10 @@ public class ItemCaptura {
     private String latitude;
     private String longitude;
     private String idDispositivo;
+
+    public String getHashCertificado() {
+        return certificado != null ? HashUtil.getMD5(certificado) : null;
+    }
 
     public String getId() {
         return id;
