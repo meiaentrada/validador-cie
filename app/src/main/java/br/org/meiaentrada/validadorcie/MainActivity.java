@@ -1,107 +1,94 @@
 package br.org.meiaentrada.validadorcie;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Map;
-import java.util.HashMap;
-
+import android.Manifest;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.database.DatabaseUtils;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.util.Log;
-import android.widget.DatePicker;
-import android.widget.EditText;
-import android.net.ConnectivityManager;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-
-import com.android.volley.RequestQueue;
-import com.android.volley.Request;
-import com.android.volley.toolbox.Volley;
-import com.android.volley.toolbox.StringRequest;
-
-import android.content.SharedPreferences;
-
-import java.io.IOException;
-
-import com.example.brodda.validadorcie.R;
-import com.google.android.gms.vision.barcode.Barcode;
-import com.google.android.gms.vision.CameraSource;
-import com.google.android.gms.vision.barcode.BarcodeDetector;
-import com.google.android.gms.vision.Detector;
-
 import android.graphics.Color;
-import android.Manifest;
-import android.content.pm.PackageManager;
+import android.graphics.PorterDuff;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.os.Bundle;
+import android.provider.Settings.Secure;
+import android.support.constraint.ConstraintLayout;
+import android.support.constraint.ConstraintSet;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.io.StringReader;
-
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.example.brodda.validadorcie.R;
+import com.google.android.gms.vision.CameraSource;
+import com.google.android.gms.vision.Detector;
+import com.google.android.gms.vision.barcode.Barcode;
+import com.google.android.gms.vision.barcode.BarcodeDetector;
+import com.google.gson.Gson;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.MemoryPolicy;
+import com.squareup.picasso.NetworkPolicy;
+import com.squareup.picasso.Picasso;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.AttributeCertificateHolder;
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
 import org.bouncycastle.openssl.PEMParser;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import org.json.*;
-
-import android.graphics.PorterDuff;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.BroadcastReceiver;
-
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.DateFormat;
 import java.text.Normalizer;
-
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
-
-import com.android.volley.toolbox.JsonObjectRequest;
-
-import android.support.constraint.ConstraintSet;
-import android.location.LocationManager;
-import android.location.Criteria;
-import android.location.LocationListener;
-import android.location.Location;
-import android.provider.Settings.Secure;
-import android.text.InputType;
-
-import com.google.gson.Gson;
-import com.squareup.picasso.Callback;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.MemoryPolicy;
-import com.squareup.picasso.NetworkPolicy;
-import com.android.volley.AuthFailureError;
-
-import android.util.DisplayMetrics;
+import java.util.Map;
 
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
+import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
 import br.org.meiaentrada.validadorcie.model.ItemCaptura;
 import br.org.meiaentrada.validadorcie.model.RetornoValidacao;
 import br.org.meiaentrada.validadorcie.model.ValidacaoDTO;
-import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
 import br.org.meiaentrada.validadorcie.service.BarcodeService;
 import br.org.meiaentrada.validadorcie.service.CertificadoService;
 import br.org.meiaentrada.validadorcie.service.ToastService;
@@ -199,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         animFabRotateClock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
         animFabRotateAntiClock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
 
-        menuContainers = new ArrayList<View>(Arrays.asList(contChave, contEvento, contCpf, contCodData));
+        menuContainers = new ArrayList<>(Arrays.asList(contChave, contEvento, contCpf, contCodData));
 
         fabMenu.setOnClickListener(view -> {
 
@@ -211,6 +198,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         });
 
         while (!PermissionsUtil.checarPermissoes(this)) {
+
         }
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -338,13 +326,13 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 if (!validacaoDTO.getStatus()) {
 
                                     barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                                    barcodeValue.setText("Documento Invalido!");
+                                    barcodeValue.setText(R.string.documento_invalido);
                                     prox.setVisibility(View.VISIBLE);
 
                                 } else {
 
                                     barcodeValue.setTextColor(Color.rgb(0, 255, 0));
-                                    barcodeValue.setText("Documento Valido!");
+                                    barcodeValue.setText(R.string.documento_invalido);
 
                                     if (verificaSinalDados())
                                         downloadImagem(validacaoDTO.getFoto());
@@ -493,7 +481,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
             } else {
 
-                String offline = "OFFLINE";
+                String offline = getString(R.string.offline);
                 conectado.setText(offline);
 
             }
@@ -541,9 +529,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         int paddingDp = (int) (paddingPixel * density);
         et.setPadding(paddingDp, paddingDp, paddingDp, paddingDp);
 
-        alertDialogBuilder.setCancelable(false).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-            }
+        alertDialogBuilder.setCancelable(false).setPositiveButton(getString(R.string.ok), (dialog, id) -> {
         });
 
         alerta = alertDialogBuilder.create();
@@ -557,11 +543,11 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             alerta.dismiss();
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setTitle("Validar CPF do Estudante");
+        alertDialogBuilder.setTitle(R.string.validar_cpf_estudante);
 
         EditText editText = new EditText(this);
         editText.setInputType(InputType.TYPE_CLASS_NUMBER);
-        editText.setHint("Informe o CPF do Estudante");
+        editText.setHint(R.string.informe_cpf_estudante);
         editText.getBackground().mutate()
                 .setColorFilter(getResources().getColor(
                         R.color.common_google_signin_btn_text_light), PorterDuff.Mode.SRC_ATOP);
@@ -583,8 +569,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 validaCpf(retorno);
             else {
                 if (retorno.length() > 0)
-                    dialogoAviso("CPF inválido");
-
+                    dialogoAviso(getString(R.string.documento_invalido));
             }
 
         });
@@ -608,8 +593,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder
                 .setView(layout)
-                .setTitle("Validar por Código de Uso e Data de Nascimento")
-                .setPositiveButton(R.string.dialog_ok, (d, id) -> {
+                .setTitle(R.string.validar_por_codigo_uso_e_data_nascimento)
+                .setPositiveButton(R.string.ok, (d, id) -> {
 
                     String codigoUso = edtCodigoUso.getText().toString();
                     String dataNascimento = editDataNascimento.getText().toString();
@@ -681,7 +666,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         textViewEmail.setText("");
 
         if (!codigo.isEmpty()) {
-            String email = "Usuário Atual: \n" + sharedPref.getString("email", "");
+            String email = getString(R.string.usuario_atual) + sharedPref.getString("email", "");
             textViewEmail.setText(email);
         }
 

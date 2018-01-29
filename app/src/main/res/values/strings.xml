@@ -26,5 +26,12 @@
     <string name="informe_codigo_evento">Informe o nome do evento</string>
     <string name="evento">Evento</string>
     <string name="evento_indefinido">Evento indefinido</string>
+    <string name="documento_invalido">Documento Inválido!</string>
+    <string name="offline">OFFLINE</string>
+    <string name="ok">OK</string>
+    <string name="validar_cpf_estudante">Validar CPF do Estudante</string>
+    <string name="informe_cpf_estudante">Informe o CPF do Estudante</string>
+    <string name="validar_por_codigo_uso_e_data_nascimento">Validar por Código de Uso e Data de Nascimento</string>
+    <string name="usuario_atual">Usuário Atual:</string>
 
 </resources>
