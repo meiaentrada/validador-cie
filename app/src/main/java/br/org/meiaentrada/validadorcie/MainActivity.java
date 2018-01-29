@@ -773,10 +773,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            contEvento.setVisibility(View.GONE);
-            contChave.setVisibility(View.GONE);
-            contCpf.setVisibility(View.GONE);
             evento.setVisibility(View.GONE);
+
+            closeMenuWithoutAnimation();
 
             ConstraintSet set = new ConstraintSet();
             set.clone(layout1);
@@ -812,7 +811,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 prox.setVisibility(View.VISIBLE);
 
                             }
-                            closeMenuWithoutAnimation();
+
 
                         } catch (Exception e) {
 
@@ -821,7 +820,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                             barcodeValue.setTextColor(Color.rgb(255, 0, 0));
                             barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                             prox.setVisibility(View.VISIBLE);
-                            closeMenuWithoutAnimation();
 
                         }
                     },
@@ -831,7 +829,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                         barcodeValue.setTextColor(Color.rgb(255, 0, 0));
                         barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                         prox.setVisibility(View.VISIBLE);
-                        closeMenuWithoutAnimation();
 
                     }
             ) {
@@ -863,10 +860,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            contEvento.setVisibility(View.GONE);
-            contChave.setVisibility(View.GONE);
-            contCpf.setVisibility(View.GONE);
             evento.setVisibility(View.GONE);
+
+            closeMenuWithoutAnimation();
 
             ConstraintSet set = new ConstraintSet();
             set.clone(layout1);
@@ -913,7 +909,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                         prox.setVisibility(View.VISIBLE);
 
                     }
-                    closeMenuWithoutAnimation();
 
                 } catch (Exception e) {
 
@@ -922,7 +917,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     barcodeValue.setTextColor(Color.rgb(255, 0, 0));
                     barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                     prox.setVisibility(View.VISIBLE);
-                    closeMenuWithoutAnimation();
 
                 }
 
@@ -932,7 +926,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 barcodeValue.setTextColor(Color.rgb(255, 0, 0));
                 barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                 prox.setVisibility(View.VISIBLE);
-                closeMenuWithoutAnimation();
 
             }) {
 
@@ -1275,6 +1268,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     }
 
     private void closeMenuWithoutAnimation() {
+
+        AnimationUtil.addAnimation(menuContainers, animFabClose);
 
         fabMenu.startAnimation(animFabRotateAntiClock);
 

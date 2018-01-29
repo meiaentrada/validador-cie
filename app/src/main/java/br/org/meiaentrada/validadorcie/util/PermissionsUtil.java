@@ -9,9 +9,10 @@ import android.support.v4.content.ContextCompat;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class PermissionsUtil {
 
-    public static boolean checarPermissoes(Activity activity){
+    public static boolean checarPermissoes(Activity activity) {
 
         int camera = ContextCompat.checkSelfPermission(activity.getApplicationContext(), Manifest.permission.CAMERA);
         int intern = ContextCompat.checkSelfPermission(activity.getApplicationContext(), Manifest.permission.INTERNET);
@@ -40,6 +41,7 @@ public class PermissionsUtil {
         }
 
         return true;
+
     }
 
 }
