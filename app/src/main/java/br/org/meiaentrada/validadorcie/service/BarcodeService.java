@@ -50,12 +50,14 @@ public class BarcodeService {
                 .replace("https://", "")
                 .replace("www.", "");
 
-        String[] fields = barcodeData
-                .replaceAll("(cdne.com.br/)(.+?(?=[^A-Z]))/(\\d+)", "$2;$3")
-                .split(";");
+//        String[] fields = barcodeData
+//                .replaceAll("(cdne.com.br/)(.+?(?=[^A-Z]))/\\-*\\d+", "$2;$3")
+//                .split(";");
 
-        if (fields.length == 2)
-            return new String[]{fields[0], getDataNascimento(fields[1], convertionType)};
+        String[] fields = barcodeData.split("/");
+
+        if (fields.length == 3)
+            return new String[]{fields[1], getDataNascimento(fields[2], convertionType)};
         return new String[]{};
 
     }

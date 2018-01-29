@@ -3,6 +3,7 @@ package br.org.meiaentrada.validadorcie;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -97,6 +98,7 @@ import com.android.volley.AuthFailureError;
 
 import android.util.DisplayMetrics;
 
+import br.org.meiaentrada.validadorcie.components.DateInputMask;
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
 import br.org.meiaentrada.validadorcie.model.ItemCaptura;
 import br.org.meiaentrada.validadorcie.model.RetornoValidacao;
@@ -154,25 +156,13 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     private CertificadoService certificadoService = new CertificadoService();
 
-
     ConstraintLayout contCpf, contEvento, contChave, contCodData;
-
-    View layoutDialogValidarCodigoUsoDataNascimento;
-
-    CodigoUsoDataNascimentoActivity codigoUsoDataNascimentoActivity = new CodigoUsoDataNascimentoActivity();
 
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
 
         setContentView(R.layout.activity_main);
-
-//        layoutDialogValidarCodigoUsoDataNascimento =
-//                View.inflate(this, R.layout.dialog_validar_codigo_uso_data_nascimento, null);
-//        EditText editDataNascimento = layoutDialogValidarCodigoUsoDataNascimento.findViewById(R.id.dataNacimento);
-//        editDataNascimento.setOnFocusChangeListener(new ShowDatePickerListener());
-//        editDataNascimento.addTextChangedListener(new DateInputMask(editDataNascimento));
-//        codigoUsoDataNascimentoActivity.editDataNascimento.;
 
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         eventoCfg = sharedPref.getString("evento", "");
@@ -241,7 +231,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         });
 
-
         if (checkAndRequestPermissions()) {
 
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -277,9 +266,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     try {
 
                         int rc = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA);
-                        if (rc == PackageManager.PERMISSION_GRANTED) {
+                        if (rc == PackageManager.PERMISSION_GRANTED)
                             cameraSource.start(cameraView.getHolder());
-                        }
 
                     } catch (IOException ex) {
 
@@ -484,6 +472,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     @Override
     public void onStart() {
+
         super.onStart();
 
     }
@@ -498,8 +487,10 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     @Override
     public void onPause() {
+
         unregisterReceiver(networkStateReceiver);
         super.onPause();
+
     }
 
     //Checa e solicita permissoes de acesso
@@ -536,13 +527,16 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     // remove acentos de uma string
     public static String stripAccents(String input) {
+
         return input == null ? null :
                 Normalizer.normalize(input, Normalizer.Form.NFD)
                         .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+
     }
 
     // verifica mudancas de estado de conectividade
     private BroadcastReceiver networkStateReceiver = new BroadcastReceiver() {
+
         @Override
         public void onReceive(Context context, Intent intent) {
 
@@ -660,20 +654,21 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             alerta.dismiss();
 
         final View layout = View.inflate(this, R.layout.dialog_validar_codigo_uso_data_nascimento, null);
+        final EditText edtCodigoUso = layout.findViewById(R.id.codigoUso);
+        final EditText editDataNascimento = layout.findViewById(R.id.dataNacimento);
+
+        editDataNascimento.setOnClickListener((v) -> showDatePicker(editDataNascimento));
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder
                 .setView(layout)
                 .setTitle("Validar por Código de Uso e Data de Nascimento")
                 .setPositiveButton(R.string.dialog_ok, (d, id) -> {
 
-                    EditText edtCodigoUso = layout.findViewById(R.id.codigoUso);
-                    EditText editDataNascimento = layout.findViewById(R.id.dataNacimento);
-
                     String codigoUso = edtCodigoUso.getText().toString();
                     String dataNascimento = editDataNascimento.getText().toString();
 
                     validaCodigoUsoDataNascimento(codigoUso, dataNascimento);
-
 
                 }).setNegativeButton(R.string.dialog_cancel, (d, id) -> {
                 }
@@ -1289,14 +1284,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     }
 
-    public void showDatePickerDialog(View view) {
-
-//        DatePickerFragment fragment = new DatePickerFragment();
-//        fragment.show(this.getSupportFragmentManager(), "");
-
-    }
-
-    public void showDatePicker() {
+    public void showDatePicker(EditText editDataNascimento) {
 
         Calendar calendario = Calendar.getInstance();
         int dia = calendario.get(Calendar.DAY_OF_MONTH);
@@ -1305,37 +1293,18 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, month, day) -> {
 
-            final View layout = View.inflate(this, R.layout.dialog_validar_codigo_uso_data_nascimento, null);
-            EditText editDataNascimento = layout.findViewById(R.id.dataNacimento);
-
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.YEAR, year);
             calendar.set(Calendar.MONTH, month);
             calendar.set(Calendar.DAY_OF_MONTH, day);
 
             Date date = calendar.getTime();
-            editDataNascimento.setText(date.toString());
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-mm-yyyy");
+
+            editDataNascimento.setText(simpleDateFormat.format(date));
 
         }, ano, mes, dia);
         datePickerDialog.show();
-
-    }
-
-    private class ShowDatePickerListener
-            implements View.OnFocusChangeListener, View.OnClickListener {
-
-        @Override
-        public void onFocusChange(View v, boolean hasFocus) {
-
-            if (hasFocus)
-                showDatePicker();
-
-        }
-
-        @Override
-        public void onClick(View v) {
-            showDatePicker();
-        }
 
     }
 
