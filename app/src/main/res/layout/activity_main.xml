@@ -104,7 +104,6 @@
             android:onClick="dialogoValidacaoCasoUsoDataNascimento"
             android:scaleType="center"
             android:src="@drawable/ic_action_name"
-            android:visibility="visible"
             app:fabSize="normal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -284,8 +283,8 @@
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/proximo"
-        android:layout_width="@dimen/fab_item_simples"
-        android:layout_height="@dimen/fab_item_simples"
+        android:layout_width="@dimen/fab_item_menu"
+        android:layout_height="@dimen/fab_item_menu"
         android:layout_marginBottom="8dp"
         android:onClick="proximoQrcode"
         android:scaleType="center"

@@ -2,6 +2,7 @@ package br.org.meiaentrada.validadorcie;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -21,7 +22,6 @@ import android.util.Log;
 import android.widget.EditText;
 import android.net.ConnectivityManager;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -68,8 +68,6 @@ import android.content.BroadcastReceiver;
 
 import java.text.Normalizer;
 
-import android.support.v4.content.ContextCompat;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,10 +97,11 @@ import br.org.meiaentrada.validadorcie.model.ValidacaoDTO;
 import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
 import br.org.meiaentrada.validadorcie.service.BarcodeService;
 import br.org.meiaentrada.validadorcie.service.CertificadoService;
-import br.org.meiaentrada.validadorcie.service.HttpService;
 import br.org.meiaentrada.validadorcie.service.ToastService;
+import br.org.meiaentrada.validadorcie.util.AnimationUtil;
 import br.org.meiaentrada.validadorcie.util.CpfUtil;
 import br.org.meiaentrada.validadorcie.util.HashUtil;
+import br.org.meiaentrada.validadorcie.util.PermissionsUtil;
 import br.org.meiaentrada.validadorcie.util.StringContentEncoder;
 
 
@@ -150,8 +149,10 @@ public class MainActivity extends AppCompatActivity {
 
     private CertificadoService certificadoService = new CertificadoService();
 
-
     ConstraintLayout contCpf, contEvento, contChave, contCodData;
+
+    List<View> menuContainers;
+
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -191,13 +192,12 @@ public class MainActivity extends AppCompatActivity {
         animFabRotateClock = AnimationUtils.loadAnimation(this, R.anim.rotate_clockwise);
         animFabRotateAntiClock = AnimationUtils.loadAnimation(this, R.anim.rotate_anticlockwise);
 
+        menuContainers = new ArrayList<>(Arrays.asList(contChave, contEvento, contCpf, contCodData));
+
         fabMenu.setOnClickListener(view -> {
 
             if (isMenuOpen) {
-                contChave.startAnimation(animFabClose);
-                contEvento.startAnimation(animFabClose);
-                contCpf.startAnimation(animFabClose);
-                contCodData.startAnimation(animFabClose);
+                AnimationUtil.addAnimation(menuContainers, animFabClose);
 
                 fabMenu.startAnimation(animFabRotateAntiClock);
 
@@ -208,10 +208,7 @@ public class MainActivity extends AppCompatActivity {
 
                 isMenuOpen = false;
             } else {
-                contChave.startAnimation(animFabOpen);
-                contEvento.startAnimation(animFabOpen);
-                contCpf.startAnimation(animFabOpen);
-                contCodData.startAnimation(animFabOpen);
+                AnimationUtil.addAnimation(menuContainers, animFabOpen);
 
                 fabMenu.startAnimation(animFabRotateClock);
 
@@ -225,8 +222,8 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-
-        if (checkAndRequestPermissions()) {
+        while (!PermissionsUtil.checarPermissoes(this)){
+        }
 
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             criteria = new Criteria();
@@ -301,11 +298,13 @@ public class MainActivity extends AppCompatActivity {
 
                             cameraSource.stop();
                             cameraView.setVisibility(View.GONE);
-                            fabEvento.setVisibility(View.GONE);
-                            fabCodigoAcesso.setVisibility(View.GONE);
-                            fabCpf.setVisibility(View.GONE);
+
+                            contEvento.setVisibility(View.GONE);
+                            contChave.setVisibility(View.GONE);
+                            contCpf.setVisibility(View.GONE);
+                            contCodData.setVisibility(View.GONE);
+
                             evento.setVisibility(View.GONE);
-                            fabCodigoDataNascimento.setVisibility(View.GONE);
 
                             ConstraintSet set = new ConstraintSet();
                             set.clone(layout1);
@@ -426,8 +425,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-        }
-
     }
 
     // rotina de gps
@@ -476,38 +473,6 @@ public class MainActivity extends AppCompatActivity {
     public void onPause() {
         unregisterReceiver(networkStateReceiver);
         super.onPause();
-    }
-
-    //Checa e solicita permissoes de acesso
-    private boolean checkAndRequestPermissions() {
-
-        int camera = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-        int intern = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
-        int acl = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-        int rps = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE);
-        int ans = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE);
-        int aws = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_WIFI_STATE);
-        List<String> listPermissionsNeeded = new ArrayList<>();
-
-        if (camera != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.CAMERA);
-        if (intern != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.INTERNET);
-        if (rps != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.READ_PHONE_STATE);
-        if (ans != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.ACCESS_NETWORK_STATE);
-        if (aws != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.ACCESS_WIFI_STATE);
-        if (acl != PackageManager.PERMISSION_GRANTED)
-            listPermissionsNeeded.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-
-        if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), 1);
-            return checkAndRequestPermissions();
-        }
-        return true;
-
     }
 
     // remove acentos de uma string
@@ -783,10 +748,10 @@ public class MainActivity extends AppCompatActivity {
         foto.setVisibility(View.GONE);
         prox.setVisibility(View.GONE);
         cameraView.setVisibility(View.VISIBLE);
-        fabEvento.setVisibility(View.VISIBLE);
-        fabCodigoAcesso.setVisibility(View.VISIBLE);
+        contEvento.setVisibility(View.VISIBLE);
+        contChave.setVisibility(View.VISIBLE);
         evento.setVisibility(View.VISIBLE);
-        fabCpf.setVisibility(View.VISIBLE);
+        contCpf.setVisibility(View.VISIBLE);
 
         try {
 
@@ -810,9 +775,9 @@ public class MainActivity extends AppCompatActivity {
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            fabEvento.setVisibility(View.GONE);
-            fabCodigoAcesso.setVisibility(View.GONE);
-            fabCpf.setVisibility(View.GONE);
+            contEvento.setVisibility(View.GONE);
+            contChave.setVisibility(View.GONE);
+            contCpf.setVisibility(View.GONE);
             evento.setVisibility(View.GONE);
 
             ConstraintSet set = new ConstraintSet();
@@ -897,9 +862,9 @@ public class MainActivity extends AppCompatActivity {
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            fabEvento.setVisibility(View.GONE);
-            fabCodigoAcesso.setVisibility(View.GONE);
-            fabCpf.setVisibility(View.GONE);
+            contEvento.setVisibility(View.GONE);
+            contChave.setVisibility(View.GONE);
+            contCpf.setVisibility(View.GONE);
             evento.setVisibility(View.GONE);
 
             ConstraintSet set = new ConstraintSet();
