@@ -31,10 +31,6 @@ dependencies {
     compile 'com.android.volley:volley:1.1.0'
     compile 'com.android.support:design:26.1.0'
 
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.1'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
-
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.58'
     compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.58'
 
@@ -44,6 +40,10 @@ dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.9.1'
     compile group: 'joda-time', name: 'joda-time', version: '2.9.9'
 
-//    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
+    testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 
 }
