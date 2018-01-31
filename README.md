@@ -1,4 +1,5 @@
 # Validador CIE
+
 App Android para validação de carteiras de identificação de estudantes digitais
 
 Este APP foi criado para servir de referência para estabelecimentos interessados em validar carteiras de identificação de estudantes (CIE) digitais seguindo as diretrizes do www.meiaentrada.org.br
@@ -15,7 +16,7 @@ Testado em Celulares Samsung Galaxy S7 e Xiaomi Redmi 2pro
 
 # Instruções de uso
 
-![alt text](instrucoes_cie.png) 
+![alt text](docs/instrucoes_cie.png) 
 
 
 [Ler Aviso Legal](docs/DISCLAIMER.md)
