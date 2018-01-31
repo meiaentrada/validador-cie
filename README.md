@@ -19,4 +19,4 @@ Testado em Celulares Samsung Galaxy S7 e Xiaomi Redmi 2pro
 ![alt text](docs/instrucoes_cie.png) 
 
 
-[Ler Aviso Legal deste projeto](docs/DISCLAIMER.md)
+[Ler Aviso Legal deste Projeto](docs/DISCLAIMER.md)
