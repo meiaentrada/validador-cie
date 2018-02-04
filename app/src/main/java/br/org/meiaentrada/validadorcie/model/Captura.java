@@ -14,6 +14,36 @@ public class Captura {
     private String longitude;
     private String idDispositivo;
 
+    public Captura() {
+    }
+
+    public Captura(String certificado, String resultado, String horario, String evento,
+                   String latitude, String longitude, String idDispositivo) {
+
+        this.certificado = certificado;
+        this.resultado = resultado;
+        this.horario = horario;
+        this.evento = evento;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.idDispositivo = idDispositivo;
+
+    }
+
+    public Captura(String id, String certificado, String resultado, String horario, String evento,
+                   String latitude, String longitude, String idDispositivo) {
+
+        this.id = id;
+        this.certificado = certificado;
+        this.resultado = resultado;
+        this.horario = horario;
+        this.evento = evento;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.idDispositivo = idDispositivo;
+
+    }
+
     public String getHashCertificado() {
         return certificado != null ? HashUtil.getMD5(certificado) : null;
     }

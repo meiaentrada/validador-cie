@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
@@ -97,8 +98,10 @@ import br.org.meiaentrada.validadorcie.util.StringContentEncoder;
 
 public class MainActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener {
 
-    DatabaseHandler databaseHandler = new DatabaseHandler(this, null);
-    DeviceLocation deviceLocation;
+    public static final String TAG = "MainActivity";
+
+    private DatabaseHandler databaseHandler;
+    private DeviceLocation deviceLocation;
 
     BarcodeDetector barcodeDetector;
     String eventoCfg;
@@ -127,7 +130,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     LocationManager locationManager;
     String provider;
-    DeviceLocationListener mylistener;
+
+    LocationListener mLocationListener;
     Criteria criteria;
     String mDeviceId;
 
@@ -147,13 +151,11 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
-
         setContentView(R.layout.activity_main);
 
         //
-
-//        databaseHandler = new DatabaseHandler(getBaseContext(), null);
-
+        databaseHandler = new DatabaseHandler(this, null);
+        deviceLocation = new DeviceLocation();
         //
 
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
@@ -214,10 +216,10 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         if (rcl == PackageManager.PERMISSION_GRANTED) {
 
             Location location = locationManager.getLastKnownLocation(provider);
-            mylistener = new DeviceLocationListener(deviceLocation, getApplicationContext());
+            mLocationListener = new DeviceLocationListener(deviceLocation, getApplicationContext());
             if (location != null)
-                mylistener.onLocationChanged(location);
-            locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
+                mLocationListener.onLocationChanged(location);
+            locationManager.requestLocationUpdates(provider, 200, 1, mLocationListener);
 
         }
 
@@ -348,8 +350,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 Captura captura = new Captura();
                                 captura.setResultado(String.valueOf(validacaoDTO.getStatus()));
                                 captura.setEvento(eventoCfg);
-                                captura.setLatitude("8.8");
-                                captura.setLatitude("6.5");
+                                captura.setLatitude(String.valueOf(deviceLocation.getLatitude()));
+                                captura.setLongitude(String.valueOf(deviceLocation.getLongitude()));
                                 captura.setIdDispositivo(mDeviceId);
                                 captura.setHorario(ts);
 
@@ -373,8 +375,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 captura.setCertificado(document);
                                 captura.setResultado(String.valueOf(emissor.getErro()));
                                 captura.setEvento(eventoCfg);
-                                captura.setLatitude("8.8");
-                                captura.setLatitude("6.5");
+                                captura.setLatitude(String.valueOf(deviceLocation.getLatitude()));
+                                captura.setLongitude(String.valueOf(deviceLocation.getLongitude()));
                                 captura.setIdDispositivo(mDeviceId);
                                 captura.setHorario(ts);
 
@@ -416,16 +418,14 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 Long tsLong = System.currentTimeMillis() / 1000;
                                 String ts = tsLong.toString();
 
-
-                                Captura captura = new Captura();
-                                captura.setCertificado(document);
-                                captura.setResultado(String.valueOf(resultado_valida.getErro()));
-                                captura.setEvento(eventoCfg);
-                                captura.setLatitude("8.8");
-                                captura.setLatitude("6.5");
-                                captura.setIdDispositivo(mDeviceId);
-                                captura.setHorario(ts);
-
+                                Captura captura = new Captura(document,
+                                        String.valueOf(resultado_valida.getErro()),
+                                        ts,
+                                        eventoCfg,
+                                        String.valueOf(deviceLocation.getLatitude()),
+                                        String.valueOf(deviceLocation.getLongitude()),
+                                        mDeviceId
+                                );
                                 databaseHandler.addCaptura(captura);
                                 barcodeValue.setText(resultado_valida.getResultado());
 

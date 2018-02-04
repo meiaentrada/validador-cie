@@ -88,7 +88,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(selectQuery, null);
 
         Captura captura = new Captura();
-
         captura.setId("");
 
         if (cursor.moveToFirst()) {
