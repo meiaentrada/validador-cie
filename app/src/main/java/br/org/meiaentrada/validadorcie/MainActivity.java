@@ -16,12 +16,15 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings.Secure;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.util.DisplayMetrics;
@@ -55,16 +58,11 @@ import com.squareup.picasso.MemoryPolicy;
 import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.cert.AttributeCertificateHolder;
-import org.bouncycastle.cert.X509AttributeCertificateHolder;
-import org.bouncycastle.openssl.PEMParser;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.DateFormat;
@@ -88,6 +86,7 @@ import br.org.meiaentrada.validadorcie.model.RetornoValidacao;
 import br.org.meiaentrada.validadorcie.model.ValidacaoDTO;
 import br.org.meiaentrada.validadorcie.service.BarcodeService;
 import br.org.meiaentrada.validadorcie.service.CertificadoService;
+import br.org.meiaentrada.validadorcie.service.GpsService;
 import br.org.meiaentrada.validadorcie.service.ToastService;
 import br.org.meiaentrada.validadorcie.util.AnimationUtil;
 import br.org.meiaentrada.validadorcie.util.CpfUtil;
@@ -100,13 +99,13 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     public static final String TAG = "MainActivity";
 
+    private BroadcastReceiver broadcastReceiver;
     private DatabaseHandler databaseHandler;
     private DeviceLocation deviceLocation;
 
     BarcodeDetector barcodeDetector;
     String eventoCfg;
     SharedPreferences sharedPref;
-
 
     private CameraSource cameraSource;
     private SurfaceView cameraView;
@@ -363,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                         } else {
 
-                            RetornoValidacao emissor = pegaEmissor(document);
+                            RetornoValidacao emissor = certificadoService.pegaEmissor(document);
 
                             if (emissor.getErro()) {
 
@@ -457,6 +456,35 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     public void onResume() {
 
         super.onResume();
+
+        if (broadcastReceiver == null) {
+
+            broadcastReceiver = new BroadcastReceiver() {
+
+                @Override
+                public void onReceive(Context context, Intent intent) {
+
+                    try {
+
+                        String jsonString = intent.getExtras().get("device_coordinates").toString();
+
+                        Gson gson = new Gson();
+                        deviceLocation = gson.fromJson(jsonString, DeviceLocation.class);
+
+                    } catch (Exception e) {
+
+                        Log.e(TAG, e.getMessage());
+
+                    }
+
+                }
+
+            };
+
+        }
+        registerReceiver(broadcastReceiver, new IntentFilter(GpsService.LOCATION_UPDATE));
+
+
         registerReceiver(networkStateReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
     }
@@ -465,6 +493,15 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     public void onPause() {
         unregisterReceiver(networkStateReceiver);
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        super.onDestroy();
+        if (broadcastReceiver != null)
+            unregisterReceiver(broadcastReceiver);
+
     }
 
     // remove acentos de uma string
@@ -1033,36 +1070,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     }
 
-    // busca emissor dentro do certificado
-    RetornoValidacao pegaEmissor(String certDNE) {
-
-        RetornoValidacao retornove = new RetornoValidacao();
-        retornove.setResultado(GlobalConstants.ERRO_INVALIDO);
-        retornove.setErro(true);
-
-        try {
-
-            certDNE = "-----BEGIN ATTRIBUTE CERTIFICATE-----\n" + certDNE + "\n-----END ATTRIBUTE CERTIFICATE-----";
-            PEMParser pemattr = new PEMParser(new StringReader(certDNE));
-            Object objattr2 = pemattr.readObject();
-            pemattr.close();
-            X509AttributeCertificateHolder attr2 = (X509AttributeCertificateHolder) objattr2;
-            AttributeCertificateHolder h = attr2.getHolder();
-            X500Name[] nomex = h.getIssuer();
-            String nomefull = nomex[0] + "";
-            Integer indice1 = nomefull.indexOf("OU=");
-            Integer indice2 = nomefull.indexOf("CN=");
-            nomefull = nomefull.substring(indice1 + 3, indice2 - 1);
-            nomefull = nomefull.replaceAll("\\s+", "");
-            retornove.setResultado(nomefull);
-            retornove.setErro(false);
-            return retornove;
-
-        } catch (Exception e) {
-            return retornove;
-        }
-
-    }
 
     // download de foto de estudante usando Picasso
     private void downloadImagem(String urlimagem) {
@@ -1184,4 +1191,58 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == 100) {
+            if (!(grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED))
+                runtimePermissions();
+        }
+
+    }
+
+    private boolean runtimePermissions() {
+
+        if (Build.VERSION.SDK_INT >= 23 &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            requestPermissions(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            }, 100);
+            return true;
+        }
+        return false;
+
+    }
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,6 +1,5 @@
 package br.org.meiaentrada.validadorcie.service;
 
-
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Attribute;
 import org.bouncycastle.cert.AttributeCertificateHolder;
@@ -85,6 +84,37 @@ public class CertificadoService {
         } catch (Exception e) {
             e.printStackTrace();
             return retornov;
+        }
+
+    }
+
+    // busca emissor dentro do certificado
+    public RetornoValidacao pegaEmissor(String certDNE) {
+
+        RetornoValidacao retornove = new RetornoValidacao();
+        retornove.setResultado(GlobalConstants.ERRO_INVALIDO);
+        retornove.setErro(true);
+
+        try {
+
+            certDNE = "-----BEGIN ATTRIBUTE CERTIFICATE-----\n" + certDNE + "\n-----END ATTRIBUTE CERTIFICATE-----";
+            PEMParser pemattr = new PEMParser(new StringReader(certDNE));
+            Object objattr2 = pemattr.readObject();
+            pemattr.close();
+            X509AttributeCertificateHolder attr2 = (X509AttributeCertificateHolder) objattr2;
+            AttributeCertificateHolder h = attr2.getHolder();
+            X500Name[] nomex = h.getIssuer();
+            String nomefull = nomex[0] + "";
+            Integer indice1 = nomefull.indexOf("OU=");
+            Integer indice2 = nomefull.indexOf("CN=");
+            nomefull = nomefull.substring(indice1 + 3, indice2 - 1);
+            nomefull = nomefull.replaceAll("\\s+", "");
+            retornove.setResultado(nomefull);
+            retornove.setErro(false);
+            return retornove;
+
+        } catch (Exception e) {
+            return retornove;
         }
 
     }

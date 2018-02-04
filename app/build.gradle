@@ -42,35 +42,4 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 
-    // https://developer.android.com/topic/libraries/architecture/adding-components.html
-    // ViewModel and LiveData
-    implementation "android.arch.lifecycle:extensions:1.1.0"
-    // alternatively, just ViewModel
-    implementation "android.arch.lifecycle:viewmodel:1.1.0"
-    // alternatively, just LiveData
-    implementation "android.arch.lifecycle:livedata:1.1.0"
-    annotationProcessor "android.arch.lifecycle:compiler:1.1.0"
-    // Room (use 1.1.0-alpha1 for latest alpha)
-    implementation "android.arch.persistence.room:runtime:1.0.0"
-    annotationProcessor "android.arch.persistence.room:compiler:1.0.0"
-    // Paging
-    implementation "android.arch.paging:runtime:1.0.0-alpha5"
-    // Test helpers for LiveData
-    testImplementation "android.arch.core:core-testing:1.1.0"
-    // Test helpers for Room
-    testImplementation "android.arch.persistence.room:testing:1.0.0"
-
-    implementation "android.arch.lifecycle:common-java8:1.1.0"
-
-    // RxJava support for Room
-//    implementation "android.arch.persistence.room:rxjava2:1.1.0"
-    compile group: 'io.reactivex.rxjava2', name: 'rxandroid', version: '2.0.1'
-
-    // ReactiveStreams support for LiveData
-    implementation "android.arch.lifecycle:reactivestreams:1.1.0"
-
-    // Lifecycles only (no ViewModel or LiveData)
-    implementation "android.arch.lifecycle:runtime:1.1.0"
-    annotationProcessor "android.arch.lifecycle:compiler:1.1.0"
-
 }
