@@ -64,6 +64,7 @@ dependencies {
 
     // RxJava support for Room
 //    implementation "android.arch.persistence.room:rxjava2:1.1.0"
+    compile group: 'io.reactivex.rxjava2', name: 'rxandroid', version: '2.0.1'
 
     // ReactiveStreams support for LiveData
     implementation "android.arch.lifecycle:reactivestreams:1.1.0"
