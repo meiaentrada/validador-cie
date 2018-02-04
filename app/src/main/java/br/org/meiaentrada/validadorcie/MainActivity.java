@@ -4,21 +4,15 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.location.Criteria;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
@@ -86,7 +80,9 @@ import java.util.Map;
 
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
 import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
-import br.org.meiaentrada.validadorcie.model.ItemCaptura;
+import br.org.meiaentrada.validadorcie.model.DatabaseHandler;
+import br.org.meiaentrada.validadorcie.model.DeviceLocation;
+import br.org.meiaentrada.validadorcie.model.Captura;
 import br.org.meiaentrada.validadorcie.model.RetornoValidacao;
 import br.org.meiaentrada.validadorcie.model.ValidacaoDTO;
 import br.org.meiaentrada.validadorcie.service.BarcodeService;
@@ -101,10 +97,13 @@ import br.org.meiaentrada.validadorcie.util.StringContentEncoder;
 
 public class MainActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener {
 
+    DatabaseHandler databaseHandler = new DatabaseHandler(this, null);
+    DeviceLocation deviceLocation;
+
     BarcodeDetector barcodeDetector;
     String eventoCfg;
     SharedPreferences sharedPref;
-    DatabaseHandler db = new DatabaseHandler(this);
+
 
     private CameraSource cameraSource;
     private SurfaceView cameraView;
@@ -128,11 +127,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     LocationManager locationManager;
     String provider;
-    MyLocationListener mylistener;
+    DeviceLocationListener mylistener;
     Criteria criteria;
-    String latitude;
-    String longitude;
-    String androidId;
+    String mDeviceId;
 
     FloatingActionButton fabMenu;
     Animation animFabOpen, animFabClose, animFabRotateClock, animFabRotateAntiClock;
@@ -153,6 +150,12 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         setContentView(R.layout.activity_main);
 
+        //
+
+//        databaseHandler = new DatabaseHandler(getBaseContext(), null);
+
+        //
+
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         eventoCfg = sharedPref.getString("evento", "");
         codigoCfg = sharedPref.getString("codigo", "");
@@ -168,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         evento = findViewById(R.id.evento);
         evento.setText(eventoCfg);
         layout1 = findViewById(R.id.layout1);
-        androidId = Secure.ANDROID_ID;
+        mDeviceId = Secure.ANDROID_ID;
 
         contCpf = findViewById(R.id.cont_cpf);
         contEvento = findViewById(R.id.cont_evento);
@@ -211,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         if (rcl == PackageManager.PERMISSION_GRANTED) {
 
             Location location = locationManager.getLastKnownLocation(provider);
-            mylistener = new MyLocationListener();
+            mylistener = new DeviceLocationListener(deviceLocation, getApplicationContext());
             if (location != null)
                 mylistener.onLocationChanged(location);
             locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
@@ -342,7 +345,15 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 }
                                 closeMenuWithoutAnimation();
 
-                                db.adicionaCaptura("", validacaoDTO.getStatus(), ts, eventoCfg);
+                                Captura captura = new Captura();
+                                captura.setResultado(String.valueOf(validacaoDTO.getStatus()));
+                                captura.setEvento(eventoCfg);
+                                captura.setLatitude("8.8");
+                                captura.setLatitude("6.5");
+                                captura.setIdDispositivo(mDeviceId);
+                                captura.setHorario(ts);
+
+                                databaseHandler.addCaptura(captura);
 
                             }, error -> Log.e(MainActivity.class.getName(), error.getMessage()));
 
@@ -357,7 +368,18 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 barcodeValue.setTextColor(Color.rgb(255, 0, 0));
                                 Long tsLong = System.currentTimeMillis() / 1000;
                                 String ts = tsLong.toString();
-                                db.adicionaCaptura(document, emissor.getErro(), ts, eventoCfg);
+
+                                Captura captura = new Captura();
+                                captura.setCertificado(document);
+                                captura.setResultado(String.valueOf(emissor.getErro()));
+                                captura.setEvento(eventoCfg);
+                                captura.setLatitude("8.8");
+                                captura.setLatitude("6.5");
+                                captura.setIdDispositivo(mDeviceId);
+                                captura.setHorario(ts);
+
+                                databaseHandler.addCaptura(captura);
+
                                 barcodeValue.setText(emissor.getResultado());
                                 prox.setVisibility(View.VISIBLE);
 
@@ -393,7 +415,18 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                                 Long tsLong = System.currentTimeMillis() / 1000;
                                 String ts = tsLong.toString();
-                                db.adicionaCaptura(document, resultado_valida.getErro(), ts, eventoCfg);
+
+
+                                Captura captura = new Captura();
+                                captura.setCertificado(document);
+                                captura.setResultado(String.valueOf(resultado_valida.getErro()));
+                                captura.setEvento(eventoCfg);
+                                captura.setLatitude("8.8");
+                                captura.setLatitude("6.5");
+                                captura.setIdDispositivo(mDeviceId);
+                                captura.setHorario(ts);
+
+                                databaseHandler.addCaptura(captura);
                                 barcodeValue.setText(resultado_valida.getResultado());
 
                             }
@@ -411,34 +444,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         Calendar cal = new GregorianCalendar(year, month, day);
         setDate(cal);
-
-    }
-
-    // rotina de gps
-    private class MyLocationListener implements LocationListener {
-
-        @Override
-        public void onLocationChanged(Location location) {
-
-            latitude = Double.toString(location.getLatitude());
-            longitude = Double.toString(location.getLongitude());
-
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }
 
     }
 
@@ -936,7 +941,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         try {
 
-            final ItemCaptura proxi = db.retornaProximo();
+            final Captura proxi = databaseHandler.nextCaptura();
             if (!proxi.getId().equals("")) {
 
                 RequestQueue queue = Volley.newRequestQueue(this);
@@ -957,7 +962,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 Boolean retorno = response.getBoolean("status");
                                 if (retorno) {
 
-                                    db.deletaItem(proxi.getId());
+                                    databaseHandler.deleteCaptura(proxi.getId());
                                     mandaCaptura();
 
                                 } else {
@@ -1013,7 +1018,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                             }
                         }
 
-                        if (db.totalCapturas() > 0) {
+                        if (databaseHandler.totalOfCapturas() > 0) {
                             mandaCaptura();
                         }
 
@@ -1097,110 +1102,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                     }
                 });
-
-    }
-
-    // cria base de dados local e rotinas de manipulacao
-    public class DatabaseHandler extends SQLiteOpenHelper {
-
-        private DatabaseHandler(Context context) {
-            super(context, "validadorDNE", null, 1);
-        }
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-
-            String CRIA_TABELA_CAPTURAS = "CREATE TABLE capturas ("
-                    + "id INTEGER PRIMARY KEY,"
-                    + "certificado TEXT,"
-                    + "resultado TEXT,"
-                    + "horario TEXT,"
-                    + "evento TEXT,"
-                    + "latitude TEXT,"
-                    + "longitude TEXT,"
-                    + "idDispositivo TEXT,"
-                    + "CONSTRAINT restricao UNIQUE (certificado, horario));";
-
-            db.execSQL(CRIA_TABELA_CAPTURAS);
-        }
-
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-            db.execSQL("DROP TABLE IF EXISTS capturas");
-            onCreate(db);
-
-        }
-
-        private void adicionaCaptura(String certif, boolean resul, String horario, String evento) {
-
-            SQLiteDatabase dbx = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-
-            values.put("certificado", certif != null ? HashUtil.getMD5(certif) : null);
-            values.put("resultado", resul);
-            values.put("horario", horario);
-            values.put("evento", evento);
-            values.put("latitude", latitude);
-            values.put("longitude", longitude);
-            values.put("idDispositivo", androidId);
-
-            dbx.insert("capturas", null, values);
-            dbx.close();
-
-            if (verificaSinalDados()) {
-                mandaCaptura();
-            }
-
-        }
-
-        private int totalCapturas() {
-
-            SQLiteDatabase db = this.getReadableDatabase();
-            long cnt = DatabaseUtils.queryNumEntries(db, "capturas");
-            Integer cnti = (int) cnt;
-            db.close();
-            return cnti;
-
-        }
-
-        private void deletaItem(String id) {
-
-            SQLiteDatabase db = this.getWritableDatabase();
-            db.delete("capturas", "id = ?", new String[]{id});
-            db.close();
-
-        }
-
-        private ItemCaptura retornaProximo() {
-
-            String selectQuery = "SELECT * FROM capturas LIMIT 1";
-            SQLiteDatabase db = this.getReadableDatabase();
-            Cursor cursor = db.rawQuery(selectQuery, null);
-
-            ItemCaptura item = new ItemCaptura();
-
-            item.setId("");
-
-            if (cursor.moveToFirst()) {
-
-                Integer idint = cursor.getInt(0);
-                item.setId(idint.toString());
-                item.setCertificado(cursor.getString(1));
-                item.setResultado(cursor.getString(2));
-                item.setHorario(cursor.getString(3));
-                item.setEvento(cursor.getString(4));
-                item.setLatitude(cursor.getString(5));
-                item.setLongitude(cursor.getString(6));
-                item.setIdDispositivo(cursor.getString(7));
-
-            }
-
-            cursor.close();
-            db.close();
-
-            return item;
-        }
 
     }
 

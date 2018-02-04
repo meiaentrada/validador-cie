@@ -1,9 +1,9 @@
 package br.org.meiaentrada.validadorcie.model;
 
-
 import br.org.meiaentrada.validadorcie.util.HashUtil;
 
-public class ItemCaptura {
+
+public class Captura {
 
     private String id;
     private String certificado;
