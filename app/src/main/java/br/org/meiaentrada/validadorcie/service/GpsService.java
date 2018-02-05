@@ -62,6 +62,7 @@ public class GpsService extends Service {
                 startActivity(intent);
 
             }
+
         };
 
         locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
