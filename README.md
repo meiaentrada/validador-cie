@@ -16,7 +16,9 @@ Testado em Celulares Samsung Galaxy S7 e Xiaomi Redmi 2pro
 
 # Instruções de uso
 
-![alt text](docs/instrucoes_cie.png) 
+![Explicação dos itens do menu lateral](docs/instrucoes1.png)
+<br>
+![Explicações a respeito de itens gerais na tela](docs/instrucoes2.png)
 
 
 [Ler Aviso Legal deste Projeto](docs/DISCLAIMER.md)
