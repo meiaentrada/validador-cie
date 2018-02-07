@@ -4,7 +4,7 @@ android {
     compileSdkVersion 26
     defaultConfig {
         applicationId 'br.org.meiaentrada.validadorcie'
-        minSdkVersion 22
+        minSdkVersion 19
         targetSdkVersion 26
         versionCode 1
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
