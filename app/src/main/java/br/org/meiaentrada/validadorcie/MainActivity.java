@@ -737,12 +737,12 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                         editor.apply();
 
                                     } catch (JSONException e) {
-                                        Log.e("", e.getMessage());
+//                                        Log.e(TAG, e.getMessage());
                                     }
 
                                 }, error -> {
 
-                                    // TODO Auto-generated method stub
+//                                    Log.e(TAG, error.getMessage());
 
                                 });
 
