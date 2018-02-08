@@ -16,7 +16,7 @@ Testado em Celulares Samsung Galaxy S7 e Xiaomi Redmi 2pro
 
 # Download do App
 
-Se você já se cadastrou como operador do seu estabelecimento, você pode instalar o aplicativo de validação para plataforma Android. O arquivo .apk para instalação pode ser acessado ![aqui](https://github.com/meiaentrada/validador-cie/releases).
+Se você já se cadastrou como operador do seu estabelecimento, você pode instalar o aplicativo de validação para plataforma Android. O arquivo .apk para instalação pode ser acessado [aqui](https://github.com/meiaentrada/validador-cie/releases).
 
 
 # Instruções de uso
