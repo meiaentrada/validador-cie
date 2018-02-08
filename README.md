@@ -31,4 +31,5 @@ Se você já se cadastrou como operador do seu estabelecimento, você pode insta
 
 
 
+# AVISO LEGAL
 [Ler Aviso Legal deste Projeto](docs/DISCLAIMER.md)
