@@ -18,4 +18,6 @@ public class GlobalConstants {
     public static final String URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO =
             "https://qczjzea7ah.execute-api.sa-east-1.amazonaws.com/validador_api_3";
 
+    public static final String PREFERENCE_FILE_KEY = "val_shared_pref";
+
 }

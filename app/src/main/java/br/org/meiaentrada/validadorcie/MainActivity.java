@@ -95,13 +95,16 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     public static final String TAG = "MainActivity";
 
+    private String mDeviceId;
+
     private BroadcastReceiver broadcastReceiver;
     private DatabaseHandler databaseHandler;
     private DeviceLocation deviceLocation;
+    private DeviceThings deviceThings;
+    private SharedPreferences sharedPref;
 
     BarcodeDetector barcodeDetector;
     String eventoCfg;
-    SharedPreferences sharedPref;
 
     private CameraSource cameraSource;
     private SurfaceView cameraView;
@@ -128,7 +131,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     LocationListener mLocationListener;
     Criteria criteria;
-    String mDeviceId;
 
     FloatingActionButton fabMenu;
     Animation animFabOpen, animFabClose, animFabRotateClock, animFabRotateAntiClock;
@@ -145,15 +147,20 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     @Override
     public void onCreate(Bundle state) {
+
         super.onCreate(state);
         setContentView(R.layout.activity_main);
 
         //
         databaseHandler = new DatabaseHandler(this, null);
         deviceLocation = new DeviceLocation();
+        deviceThings = new DeviceThings(this);
+        sharedPref = deviceThings.getSharedPref();
+
+//        mDeviceId = deviceThings.getDeviceId();
+        mDeviceId = Secure.ANDROID_ID;
         //
 
-        sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         eventoCfg = sharedPref.getString("evento", "");
         codigoCfg = sharedPref.getString("codigo", "");
         cameraView = findViewById(R.id.camera);
@@ -168,7 +175,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         evento = findViewById(R.id.evento);
         evento.setText(eventoCfg);
         layout1 = findViewById(R.id.layout1);
-        mDeviceId = Secure.ANDROID_ID;
 
         contCpf = findViewById(R.id.cont_cpf);
         contEvento = findViewById(R.id.cont_evento);
@@ -721,6 +727,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                         SharedPreferences.Editor editor = sharedPref.edit();
                         editor.putString("codigo", codigoAcesso);
+//                        editor.apply();
 
                         codigoCfg = sharedPref.getString("codigo", "");
 
@@ -737,12 +744,14 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                         editor.apply();
 
                                     } catch (JSONException e) {
-//                                        Log.e(TAG, e.getMessage());
+                                        Log.e(TAG, e.getMessage());
                                     }
 
                                 }, error -> {
 
-//                                    Log.e(TAG, error.getMessage());
+//                                    Log.e(TAG, error.getMessage())
+
+                                    // TODO see later
 
                                 });
 
