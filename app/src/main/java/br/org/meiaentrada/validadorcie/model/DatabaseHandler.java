@@ -7,8 +7,10 @@ import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.List;
 
-public class DatabaseHandler extends SQLiteOpenHelper {
+
+public class DatabaseHandler extends SQLiteOpenHelper implements IDatabaseHandler {
 
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "validador_cie.db";
@@ -53,6 +55,20 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_CAPTURAS);
         onCreate(db);
+
+    }
+
+    public List<Captura> getAllCapturas() {
+
+        SQLiteDatabase database = getWritableDatabase();
+        Cursor cursor = database.rawQuery("SELECT * FROM " + TABLE_CAPTURAS, null);
+
+//        https://stackoverflow.com/questions/10111166/get-all-rows-from-sqlite
+
+        cursor.close();
+        database.close();
+
+        return null;
 
     }
 

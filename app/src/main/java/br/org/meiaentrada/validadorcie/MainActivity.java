@@ -16,15 +16,12 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings.Secure;
-import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.util.DisplayMetrics;
@@ -86,7 +83,6 @@ import br.org.meiaentrada.validadorcie.model.RetornoValidacao;
 import br.org.meiaentrada.validadorcie.model.ValidacaoDTO;
 import br.org.meiaentrada.validadorcie.service.BarcodeService;
 import br.org.meiaentrada.validadorcie.service.CertificadoService;
-import br.org.meiaentrada.validadorcie.service.GpsService;
 import br.org.meiaentrada.validadorcie.service.ToastService;
 import br.org.meiaentrada.validadorcie.util.AnimationUtil;
 import br.org.meiaentrada.validadorcie.util.CpfUtil;
@@ -482,7 +478,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             };
 
         }
-        registerReceiver(broadcastReceiver, new IntentFilter(GpsService.LOCATION_UPDATE));
+//        registerReceiver(broadcastReceiver, new IntentFilter(GpsService.LOCATION_UPDATE));
 
 
         registerReceiver(networkStateReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
