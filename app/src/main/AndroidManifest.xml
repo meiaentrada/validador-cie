@@ -27,6 +27,7 @@
         </activity>
 
         <service android:name="br.org.meiaentrada.validadorcie.service.GpsService" />
+
     </application>
 
 </manifest>

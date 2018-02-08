@@ -89,7 +89,6 @@ import br.org.meiaentrada.validadorcie.service.ToastService;
 import br.org.meiaentrada.validadorcie.util.AnimationUtil;
 import br.org.meiaentrada.validadorcie.util.CpfUtil;
 import br.org.meiaentrada.validadorcie.util.HashUtil;
-import br.org.meiaentrada.validadorcie.util.PermissionsUtil;
 import br.org.meiaentrada.validadorcie.util.StringContentEncoder;
 
 
@@ -150,27 +149,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     List<View> menuContainers;
 
-    @Override
-    public void onCreate(Bundle state) {
-
-        super.onCreate(state);
-        setContentView(R.layout.activity_main);
-
-        ////
-        databaseHandler = new DatabaseManager(this, null);
-        capturaDao = new SQLiteCapturaDao(databaseHandler);
-
-        deviceLocation = new DeviceLocation();
-        deviceThings = new DeviceThings(this);
-
-        sharedPref = deviceThings.getSharedPref();
-        barcodeDetector = new BarcodeDetector.Builder(this)
-                .setBarcodeFormats(Barcode.QR_CODE)
-                .build();
-
-        // mDeviceId = deviceThings.getDeviceId();
-        mDeviceId = Secure.ANDROID_ID;
-        ////
+    public void initializeUIComponents() {
 
         eventoCfg = sharedPref.getString("evento", "");
         codigoCfg = sharedPref.getString("codigo", "");
@@ -214,9 +193,36 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         });
 
-        while (!PermissionsUtil.checarPermissoes(this)) {
+    }
 
-        }
+    @Override
+    public void onCreate(Bundle state) {
+
+        super.onCreate(state);
+        setContentView(R.layout.activity_main);
+
+        ////
+        databaseHandler = new DatabaseManager(this, null);
+        capturaDao = new SQLiteCapturaDao(databaseHandler);
+
+        deviceLocation = new DeviceLocation();
+        deviceThings = new DeviceThings(this);
+
+        sharedPref = deviceThings.getSharedPref();
+        barcodeDetector = new BarcodeDetector.Builder(this)
+                .setBarcodeFormats(Barcode.QR_CODE)
+                .build();
+
+        cameraSource = new CameraSource.Builder(this, barcodeDetector)
+                .setRequestedPreviewSize(640, 480)
+                .setAutoFocusEnabled(true)
+                .build();
+
+        // mDeviceId = deviceThings.getDeviceId();
+        mDeviceId = Secure.ANDROID_ID;
+        ////
+
+        initializeUIComponents();
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         criteria = new Criteria();
@@ -235,11 +241,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         }
 
-        cameraSource = new CameraSource.Builder(this, barcodeDetector)
-                .setRequestedPreviewSize(1600, 1024)
-                .setAutoFocusEnabled(true)
-                .build();
-
         cameraView.getHolder().addCallback(new SurfaceHolder.Callback() {
 
             @Override
@@ -248,13 +249,12 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 try {
 
                     int rc = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA);
-                    if (rc == PackageManager.PERMISSION_GRANTED) {
+                    if (rc == PackageManager.PERMISSION_GRANTED)
                         cameraSource.start(cameraView.getHolder());
-                    }
 
                 } catch (IOException ex) {
 
-                    ex.printStackTrace();
+                    Log.e("CAMERA_SOURCE", ex.getMessage());
 
                 }
 
@@ -266,12 +266,13 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
+
                 cameraSource.stop();
+
             }
 
         });
 
-        // detecta o QR code
         barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
 
             @Override
@@ -280,6 +281,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
             @Override
             public void receiveDetections(Detector.Detections<Barcode> detections) {
+
                 final SparseArray<Barcode> barcodes = detections.getDetectedItems();
                 if (barcodes.size() != 0) {
                     barcodeValue.post(() -> {
@@ -365,7 +367,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                                 capturaDao.save(captura);
 
-                            }, error -> Log.e(MainActivity.class.getName(), error.getMessage()));
+                            }, error -> Log.e(TAG, error.getMessage()));
 
                             queue.add(stringRequest);
 
@@ -417,9 +419,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                         String urlimagem = GlobalConstants.URL_FOTOS + HashUtil.getMD5(document) + "/image.jpg";
                                         downloadImagem(urlimagem);
 
-                                    } else {
+                                    } else
                                         prox.setVisibility(View.VISIBLE);
-                                    }
 
                                 }
 

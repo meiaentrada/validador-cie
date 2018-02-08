@@ -5,8 +5,6 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 
-import java.util.Optional;
-
 
 public class SQLiteCapturaDao implements CapturaDao {
 
@@ -70,13 +68,39 @@ public class SQLiteCapturaDao implements CapturaDao {
     }
 
     @Override
-    public Optional<Captura> findById(String id) {
-        return null;
+    public Captura findById(String id) {
+
+        String query = "SELECT * FROM " + DatabaseManager.TABLE_CAPTURAS + " WHERE id = " + id;
+        SQLiteDatabase db = databaseHandler.getReadableDatabase();
+        Cursor cursor =  db.rawQuery(query, null);
+        cursor.moveToFirst();
+
+        Captura captura = new Captura();
+
+        while (!cursor.isAfterLast()) {
+
+            Integer cid = cursor.getInt(0);
+            captura.setId(cid.toString());
+            captura.setCertificado(cursor.getString(1));
+            captura.setResultado(cursor.getString(2));
+            captura.setHorario(cursor.getString(3));
+            captura.setEvento(cursor.getString(4));
+            captura.setLatitude(cursor.getString(5));
+            captura.setLongitude(cursor.getString(6));
+            captura.setIdDispositivo(cursor.getString(7));
+
+        }
+        cursor.close();
+        databaseHandler.close();
+        return captura;
+
     }
 
     @Override
     public Iterable<Captura> findAll() {
+
         return null;
+
     }
 
     @Override

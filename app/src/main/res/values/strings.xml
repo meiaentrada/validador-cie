@@ -5,8 +5,8 @@
 
     <string name="about_title">TITLE</string>
     <string name="about_description">Write the about app here</string>
-    
-    
+
+
     <string name="dialog_ok">OK</string>
     <string name="dialog_cancel">Cancelar</string>
     <string name="dialog_cpf_input">Informe o Código de Acesso</string>
@@ -33,5 +33,6 @@
     <string name="informe_cpf_estudante">Informe o CPF do Estudante</string>
     <string name="validar_por_codigo_uso_e_data_nascimento">Validar por Código de Uso e Data de Nascimento</string>
     <string name="usuario_atual">Usuário Atual:</string>
+    <string name="title_activity_main2">Main2Activity</string>
 
 </resources>
