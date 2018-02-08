@@ -1,14 +1,8 @@
 package br.org.meiaentrada.validadorcie.model;
 
 
-public class CapturaDao {
+public interface CapturaDao extends GenericDao<Captura, String> {
 
-    private IDatabaseHandler database;
-
-    public CapturaDao(IDatabaseHandler database) {
-
-        this.database = database;
-
-    }
+    Captura next();
 
 }

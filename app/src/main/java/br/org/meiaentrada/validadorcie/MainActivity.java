@@ -76,9 +76,11 @@ import java.util.Map;
 
 import br.org.meiaentrada.validadorcie.configuration.GlobalConstants;
 import br.org.meiaentrada.validadorcie.enumeration.BarcodeType;
-import br.org.meiaentrada.validadorcie.model.DatabaseHandler;
+import br.org.meiaentrada.validadorcie.model.SQLiteCapturaDao;
+import br.org.meiaentrada.validadorcie.model.DatabaseManager;
 import br.org.meiaentrada.validadorcie.model.DeviceLocation;
 import br.org.meiaentrada.validadorcie.model.Captura;
+import br.org.meiaentrada.validadorcie.model.CapturaDao;
 import br.org.meiaentrada.validadorcie.model.RetornoValidacao;
 import br.org.meiaentrada.validadorcie.model.ValidacaoDTO;
 import br.org.meiaentrada.validadorcie.service.BarcodeService;
@@ -97,12 +99,15 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     private String mDeviceId;
 
-    private BroadcastReceiver broadcastReceiver;
-    private DatabaseHandler databaseHandler;
+    private DatabaseManager databaseHandler;
+    private CapturaDao capturaDao;
+
     private DeviceLocation deviceLocation;
     private DeviceThings deviceThings;
     private SharedPreferences sharedPref;
 
+
+    private BroadcastReceiver broadcastReceiver;
     BarcodeDetector barcodeDetector;
     String eventoCfg;
 
@@ -151,15 +156,21 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         super.onCreate(state);
         setContentView(R.layout.activity_main);
 
-        //
-        databaseHandler = new DatabaseHandler(this, null);
+        ////
+        databaseHandler = new DatabaseManager(this, null);
+        capturaDao = new SQLiteCapturaDao(databaseHandler);
+
         deviceLocation = new DeviceLocation();
         deviceThings = new DeviceThings(this);
-        sharedPref = deviceThings.getSharedPref();
 
-//        mDeviceId = deviceThings.getDeviceId();
+        sharedPref = deviceThings.getSharedPref();
+        barcodeDetector = new BarcodeDetector.Builder(this)
+                .setBarcodeFormats(Barcode.QR_CODE)
+                .build();
+
+        // mDeviceId = deviceThings.getDeviceId();
         mDeviceId = Secure.ANDROID_ID;
-        //
+        ////
 
         eventoCfg = sharedPref.getString("evento", "");
         codigoCfg = sharedPref.getString("codigo", "");
@@ -223,10 +234,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
             locationManager.requestLocationUpdates(provider, 200, 1, mLocationListener);
 
         }
-
-        barcodeDetector = new BarcodeDetector.Builder(this)
-                .setBarcodeFormats(Barcode.QR_CODE)
-                .build();
 
         cameraSource = new CameraSource.Builder(this, barcodeDetector)
                 .setRequestedPreviewSize(1600, 1024)
@@ -356,7 +363,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 captura.setIdDispositivo(mDeviceId);
                                 captura.setHorario(ts);
 
-                                databaseHandler.addCaptura(captura);
+                                capturaDao.save(captura);
 
                             }, error -> Log.e(MainActivity.class.getName(), error.getMessage()));
 
@@ -381,7 +388,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 captura.setIdDispositivo(mDeviceId);
                                 captura.setHorario(ts);
 
-                                databaseHandler.addCaptura(captura);
+                                capturaDao.save(captura);
 
                                 barcodeValue.setText(emissor.getResultado());
                                 prox.setVisibility(View.VISIBLE);
@@ -427,7 +434,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                         String.valueOf(deviceLocation.getLongitude()),
                                         mDeviceId
                                 );
-                                databaseHandler.addCaptura(captura);
+                                capturaDao.save(captura);
                                 barcodeValue.setText(resultado_valida.getResultado());
 
                             }
@@ -486,15 +493,16 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         }
 //        registerReceiver(broadcastReceiver, new IntentFilter(GpsService.LOCATION_UPDATE));
 
-
         registerReceiver(networkStateReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
     }
 
     @Override
     public void onPause() {
+
         unregisterReceiver(networkStateReceiver);
         super.onPause();
+
     }
 
     @Override
@@ -515,6 +523,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     // verifica mudancas de estado de conectividade
     private BroadcastReceiver networkStateReceiver = new BroadcastReceiver() {
+
         @Override
         public void onReceive(Context context, Intent intent) {
 
@@ -983,7 +992,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         try {
 
-            final Captura proxi = databaseHandler.nextCaptura();
+            final Captura proxi = capturaDao.next();
             if (!proxi.getId().equals("")) {
 
                 RequestQueue queue = Volley.newRequestQueue(this);
@@ -1004,7 +1013,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 Boolean retorno = response.getBoolean("status");
                                 if (retorno) {
 
-                                    databaseHandler.deleteCaptura(proxi.getId());
+                                    capturaDao.delete(proxi.getId());
                                     mandaCaptura();
 
                                 } else {
@@ -1060,7 +1069,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                             }
                         }
 
-                        if (databaseHandler.totalOfCapturas() > 0) {
+                        if (capturaDao.count() > 0) {
                             mandaCaptura();
                         }
 
