@@ -6,10 +6,11 @@ Este APP foi criado para servir de referência para estabelecimentos interessado
 
 
 # Ambiente de compilação utilizado
-Android Studio 3.0.1
-Build #AI-171.4443003, built on November 9, 2017
-JRE: 1.8.0_152-release-915-b08 x86_64
-JVM: OpenJDK 64-Bit Server VM by JetBrains s.r.o
+
+- Android Studio 3.0.1
+- Build #AI-171.4443003, built on November 9, 2017
+- JRE: 1.8.0_152-release-915-b08 x86_64
+- JVM: OpenJDK 64-Bit Server VM by JetBrains s.r.o
 
 Importe no Android Studio a pasta ValidadorCIE como um projeto existente, e sincronize o mesmo com os arquivos do Gradle.
 
