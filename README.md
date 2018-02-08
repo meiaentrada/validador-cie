@@ -12,9 +12,9 @@ Este APP foi criado para servir de referência para estabelecimentos interessado
 - JRE: 1.8.0_152-release-915-b08 x86_64
 - JVM: OpenJDK 64-Bit Server VM by JetBrains s.r.o
 
-Importe no Android Studio a pasta ValidadorCIE como um projeto existente, e sincronize o mesmo com os arquivos do Gradle.
+> Importe no Android Studio a pasta ValidadorCIE como um projeto existente, e sincronize o mesmo com os arquivos do Gradle.
 
-Testado em Celulares Samsung Galaxy S7 e Xiaomi Redmi 2pro
+> Testado em Celulares Samsung Galaxy S7 e Xiaomi Redmi 2pro
 
 
 # Instruções de uso
