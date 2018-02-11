@@ -16,7 +16,7 @@ public class GlobalConstants {
     public static final String URL_VALIDATE_OPERADOR =     "https://prod.meiaentrada.org.br/public/operador-codigo-acesso";
 
     public static final String URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO =
-            "https://qczjzea7ah.execute-api.sa-east-1.amazonaws.com/validador_api_3";
+            "https://qczjzea7ah.execute-api.sa-east-1.amazonaws.com/validador_api_3?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s";
 
     public static final String PREFERENCE_FILE_KEY = "val_shared_pref";
 

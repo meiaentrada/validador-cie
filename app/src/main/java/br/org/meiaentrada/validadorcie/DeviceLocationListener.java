@@ -52,8 +52,8 @@ public class DeviceLocationListener implements LocationListener {
     @Override
     public void onProviderDisabled(String provider) {
 
-//        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-//        mContext.startActivity(intent);
+        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        mContext.startActivity(intent);
 
     }
 

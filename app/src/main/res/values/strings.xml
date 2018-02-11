@@ -28,6 +28,7 @@
     <string name="evento_indefinido">Evento indefinido</string>
     <string name="documento_invalido">Documento Inválido!</string>
     <string name="offline">OFFLINE</string>
+    <string name="online">ONLINE</string>
     <string name="ok">OK</string>
     <string name="validar_cpf_estudante">Validar CPF do Estudante</string>
     <string name="informe_cpf_estudante">Informe o CPF do Estudante</string>

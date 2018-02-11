@@ -31,15 +31,16 @@ public class DatabaseManager extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
 
         String query = "CREATE TABLE " + TABLE_CAPTURAS + "("
-                + COLUMN_ID + " INTEGER PRIMARY KEY,"
+                + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + COLUMN_CERTIFICADO + " TEXT,"
                 + COLUMN_RESULTADO + " TEXT,"
                 + COLUMN_HORARIO + " TEXT,"
                 + COLUMN_EVENTO + " TEXT,"
                 + COLUMN_LATITUDE + " TEXT,"
                 + COLUMN_LONGITUDE + " TEXT,"
-                + COLUMN_ID_DISPOSITIVO + " TEXT,"
-                + "CONSTRAINT restricao UNIQUE (certificado, horario));";
+                + COLUMN_ID_DISPOSITIVO + " TEXT" +
+                ", CONSTRAINT restricao UNIQUE (certificado, evento)" +
+                ")";
 
         db.execSQL(query);
 

@@ -5,7 +5,7 @@ import java.io.Serializable;
 
 public interface GenericDao<T, I extends Serializable> {
 
-    <S extends T> S save(T entity);
+    T save(T entity);
     T findById(I id);
     Iterable<T> findAll();
     int count();

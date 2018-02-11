@@ -6,7 +6,6 @@ import android.app.DatePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -63,7 +62,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.DateFormat;
-import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -97,73 +95,62 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     public static final String TAG = "MainActivity";
 
     private String mDeviceId;
-
-    private DatabaseManager databaseHandler;
-    private CapturaDao capturaDao;
-
-    private DeviceLocation deviceLocation;
-    private DeviceThings deviceThings;
-    private SharedPreferences sharedPref;
-
-
-    private BroadcastReceiver broadcastReceiver;
-    BarcodeDetector barcodeDetector;
-    String eventoCfg;
-
-    private CameraSource cameraSource;
-    private SurfaceView cameraView;
-    private TextView barcodeValue;
-    private TextView conectado;
-    private TextView evento;
-    private ProgressBar fotop;
+    private String eventoCfg;
     private String codigoCfg;
     private String crlOrigem;
-    private String chavepublicaOrigem;
-    private ImageView foto;
+    private String chavePublicaOrigem;
+    boolean isMenuOpen = false;
+
+    private Gson jsonParser = new Gson();
+
+    DatabaseManager databaseHandler;
+    private CapturaDao capturaDao;
+    private DeviceLocation deviceLocation;
+    DeviceThings deviceThings;
+
+    private SharedPreferences sharedPref;
+    BroadcastReceiver networkStateReceiver;
+    BarcodeDetector barcodeDetector;
+    private CameraSource cameraSource;
+    private SurfaceView cameraView;
+    private TextView txtBarcodeValue, txtInternetStatus, txtEvento;
+    private ProgressBar progressBar;
+    private ImageView imgPhoto;
 
     private FloatingActionButton prox;
     private FloatingActionButton fabEvento;
     private FloatingActionButton fabCodigoAcesso;
     private FloatingActionButton fabCpf;
     private FloatingActionButton fabCodigoDataNascimento;
+    private FloatingActionButton fabMenu;
+    private Animation animFabOpen, animFabClose, animFabRotateClock, animFabRotateAntiClock;
 
     private ConstraintLayout layout1;
     public AlertDialog alerta;
 
     LocationManager locationManager;
     String provider;
-
     LocationListener mLocationListener;
     Criteria criteria;
 
-    FloatingActionButton fabMenu;
-    Animation animFabOpen, animFabClose, animFabRotateClock, animFabRotateAntiClock;
-
-    boolean isMenuOpen = false;
-
-    private Gson jsonParser = new Gson();
+    private ConstraintLayout contCpf, contEvento, contChave, contCodData;
+    private List<View> menuContainers;
 
     private CertificadoService certificadoService = new CertificadoService();
 
-    ConstraintLayout contCpf, contEvento, contChave, contCodData;
-
-    List<View> menuContainers;
-
     public void initializeUIComponents() {
 
-        eventoCfg = sharedPref.getString("evento", "");
-        codigoCfg = sharedPref.getString("codigo", "");
         cameraView = findViewById(R.id.camera);
-        barcodeValue = findViewById(R.id.resultado);
+        txtBarcodeValue = findViewById(R.id.status);
         prox = findViewById(R.id.proximo);
         prox.setVisibility(View.GONE);
-        foto = findViewById(R.id.foto);
-        foto.setVisibility(View.GONE);
-        fotop = findViewById(R.id.fotop);
-        fotop.setVisibility(View.GONE);
-        conectado = findViewById(R.id.conectado);
-        evento = findViewById(R.id.evento);
-        evento.setText(eventoCfg);
+        imgPhoto = findViewById(R.id.foto);
+        imgPhoto.setVisibility(View.GONE);
+        progressBar = findViewById(R.id.fotop);
+        progressBar.setVisibility(View.GONE);
+        txtInternetStatus = findViewById(R.id.conectado);
+        txtEvento = findViewById(R.id.evento);
+        txtEvento.setText(eventoCfg);
         layout1 = findViewById(R.id.layout1);
 
         contCpf = findViewById(R.id.cont_cpf);
@@ -195,15 +182,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     }
 
-    @Override
-    public void onCreate(Bundle state) {
-
-        super.onCreate(state);
-        setContentView(R.layout.activity_main);
-
-        ////
-        databaseHandler = new DatabaseManager(this, null);
-        capturaDao = new SQLiteCapturaDao(databaseHandler);
+    public void initializeDeviceResources() {
 
         deviceLocation = new DeviceLocation();
         deviceThings = new DeviceThings(this);
@@ -218,12 +197,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 .setAutoFocusEnabled(true)
                 .build();
 
-        // mDeviceId = deviceThings.getDeviceId();
-        mDeviceId = Secure.ANDROID_ID;
-        ////
-
-        initializeUIComponents();
-
+        // LOCATION MANAGER
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_COARSE);
@@ -234,13 +208,32 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         if (rcl == PackageManager.PERMISSION_GRANTED) {
 
             Location location = locationManager.getLastKnownLocation(provider);
-            mLocationListener = new DeviceLocationListener(deviceLocation, getApplicationContext());
+            mLocationListener = new DeviceLocationListener(deviceLocation, this);
             if (location != null)
                 mLocationListener.onLocationChanged(location);
             locationManager.requestLocationUpdates(provider, 200, 1, mLocationListener);
 
         }
 
+        // BROADCAST RECEIVER
+        networkStateReceiver = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+
+                if (verificaSinalDados()) {
+
+                    getCrlsAndChavesPublicas();
+                    txtInternetStatus.setText(getString(R.string.online));
+
+                } else
+                    txtInternetStatus.setText(getString(R.string.offline));
+
+            }
+
+        };
+
+        // CAMERA VIEW
         cameraView.getHolder().addCallback(new SurfaceHolder.Callback() {
 
             @Override
@@ -273,6 +266,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         });
 
+        // BARCODE DETECTOR
         barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
 
             @Override
@@ -284,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                 final SparseArray<Barcode> barcodes = detections.getDetectedItems();
                 if (barcodes.size() != 0) {
-                    barcodeValue.post(() -> {
+                    txtBarcodeValue.post(() -> {
 
                         String document = barcodes.valueAt(0).displayValue;
 
@@ -296,23 +290,22 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                         contCpf.setVisibility(View.GONE);
                         contCodData.setVisibility(View.GONE);
 
-                        evento.setVisibility(View.GONE);
+                        txtEvento.setVisibility(View.GONE);
 
                         ConstraintSet set = new ConstraintSet();
                         set.clone(layout1);
-                        set.clear(barcodeValue.getId(), ConstraintSet.TOP);
-                        set.clear(barcodeValue.getId(), ConstraintSet.BOTTOM);
-                        set.connect(barcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
-                        set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
+                        set.clear(txtBarcodeValue.getId(), ConstraintSet.TOP);
+                        set.clear(txtBarcodeValue.getId(), ConstraintSet.BOTTOM);
+                        set.connect(txtBarcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
+                        set.connect(txtBarcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
                         set.applyTo(layout1);
 
-                        eventoCfg = sharedPref.getString("evento", "");
+                        eventoCfg = sharedPref.getString("txtEvento", "");
                         if (eventoCfg.isEmpty()) {
                             eventoCfg = getString(R.string.evento_indefinido);
                         }
 
                         BarcodeType barcodeType = BarcodeService.getBarcodeType(document);
-
                         if (barcodeType == BarcodeType.CDNE_URL) {
 
                             String[] fields =
@@ -321,18 +314,22 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                             String codigoUso = fields[0];
                             String dataNascimento = fields[1];
                             String codigoAcesso = sharedPref.getString("codigo", "");
-                            String evento = sharedPref.getString("evento", "");
+                            String evento = sharedPref.getString("txtEvento", "");
 
                             try {
+
                                 evento = URLEncoder.encode(evento, "UTF-8");
+
                             } catch (UnsupportedEncodingException e) {
-                                e.printStackTrace();
+
+                                Log.e(TAG, e.getMessage());
                             }
 
                             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
                             StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                                    GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
-                                            "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
+                                    String.format(
+                                            GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO,
+                                            codigoAcesso, dataNascimento, codigoUso, evento), response -> {
 
                                 Long tsLong = System.currentTimeMillis() / 1000;
                                 String ts = tsLong.toString();
@@ -340,14 +337,14 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 ValidacaoDTO validacaoDTO = jsonParser.fromJson(response, ValidacaoDTO.class);
                                 if (!validacaoDTO.getStatus()) {
 
-                                    barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                                    barcodeValue.setText(R.string.documento_invalido);
+                                    txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                    txtBarcodeValue.setText(R.string.documento_invalido);
                                     prox.setVisibility(View.VISIBLE);
 
                                 } else {
 
-                                    barcodeValue.setTextColor(Color.rgb(0, 255, 0));
-                                    barcodeValue.setText(R.string.documento_invalido);
+                                    txtBarcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                    txtBarcodeValue.setText(R.string.documento_invalido);
 
                                     if (verificaSinalDados())
                                         downloadImagem(validacaoDTO.getFoto());
@@ -358,12 +355,13 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 closeMenuWithoutAnimation();
 
                                 Captura captura = new Captura();
-                                captura.setResultado(String.valueOf(validacaoDTO.getStatus()));
+                                captura.setStatus(String.valueOf(validacaoDTO.getStatus()));
                                 captura.setEvento(eventoCfg);
                                 captura.setLatitude(String.valueOf(deviceLocation.getLatitude()));
                                 captura.setLongitude(String.valueOf(deviceLocation.getLongitude()));
                                 captura.setIdDispositivo(mDeviceId);
                                 captura.setHorario(ts);
+                                captura.setCodigoAcesso(codigoCfg);
 
                                 capturaDao.save(captura);
 
@@ -377,22 +375,23 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                             if (emissor.getErro()) {
 
-                                barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
                                 Long tsLong = System.currentTimeMillis() / 1000;
                                 String ts = tsLong.toString();
 
                                 Captura captura = new Captura();
                                 captura.setCertificado(document);
-                                captura.setResultado(String.valueOf(emissor.getErro()));
+                                captura.setStatus(String.valueOf(emissor.getErro()));
                                 captura.setEvento(eventoCfg);
                                 captura.setLatitude(String.valueOf(deviceLocation.getLatitude()));
                                 captura.setLongitude(String.valueOf(deviceLocation.getLongitude()));
                                 captura.setIdDispositivo(mDeviceId);
                                 captura.setHorario(ts);
+                                captura.setCodigoAcesso(codigoCfg);
 
                                 capturaDao.save(captura);
 
-                                barcodeValue.setText(emissor.getResultado());
+                                txtBarcodeValue.setText(emissor.getResultado());
                                 prox.setVisibility(View.VISIBLE);
 
                             } else {
@@ -400,19 +399,19 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                 String emissor_chave = emissor.getResultado().concat("_chave");
                                 String emissor_crl = emissor.getResultado().concat("_crl");
 
-                                chavepublicaOrigem = sharedPref.getString(emissor_chave, "");
+                                chavePublicaOrigem = sharedPref.getString(emissor_chave, "");
                                 crlOrigem = sharedPref.getString(emissor_crl, "");
 
-                                RetornoValidacao resultado_valida = certificadoService.validaCertificado(document, chavepublicaOrigem, crlOrigem);
+                                RetornoValidacao resultado_valida = certificadoService.validaCertificado(document, chavePublicaOrigem, crlOrigem);
 
                                 if (resultado_valida.getErro()) {
 
-                                    barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                    txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
                                     prox.setVisibility(View.VISIBLE);
 
                                 } else {
 
-                                    barcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                    txtBarcodeValue.setTextColor(Color.rgb(0, 255, 0));
 
                                     if (verificaSinalDados()) {
 
@@ -435,8 +434,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                                         String.valueOf(deviceLocation.getLongitude()),
                                         mDeviceId
                                 );
+                                captura.setCodigoAcesso(codigoCfg);
                                 capturaDao.save(captura);
-                                barcodeValue.setText(resultado_valida.getResultado());
+                                txtBarcodeValue.setText(resultado_valida.getResultado());
 
                             }
 
@@ -444,7 +444,29 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     });
                 }
             }
+
         });
+
+    }
+
+    @Override
+    public void onCreate(Bundle state) {
+
+        super.onCreate(state);
+        setContentView(R.layout.activity_main);
+
+        ////
+        databaseHandler = new DatabaseManager(this, null);
+        capturaDao = new SQLiteCapturaDao(databaseHandler);
+//        mDeviceId = deviceThings.getDeviceId();
+        mDeviceId = Secure.ANDROID_ID;
+        ////
+
+        initializeUIComponents();
+        initializeDeviceResources();
+
+        eventoCfg = sharedPref.getString("txtEvento", "");
+        codigoCfg = sharedPref.getString("codigo", "");
 
     }
 
@@ -458,6 +480,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     @Override
     public void onStart() {
+
         super.onStart();
 
     }
@@ -467,42 +490,13 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         super.onResume();
 
-        if (broadcastReceiver == null) {
-
-            broadcastReceiver = new BroadcastReceiver() {
-
-                @Override
-                public void onReceive(Context context, Intent intent) {
-
-                    try {
-
-                        String jsonString = intent.getExtras().get("device_coordinates").toString();
-
-                        Gson gson = new Gson();
-                        deviceLocation = gson.fromJson(jsonString, DeviceLocation.class);
-
-                    } catch (Exception e) {
-
-                        Log.e(TAG, e.getMessage());
-
-                    }
-
-                }
-
-            };
-
-        }
-//        registerReceiver(broadcastReceiver, new IntentFilter(GpsService.LOCATION_UPDATE));
-
-        registerReceiver(networkStateReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
-
     }
 
     @Override
     public void onPause() {
 
-        unregisterReceiver(networkStateReceiver);
         super.onPause();
+        unregisterReceiver(networkStateReceiver);
 
     }
 
@@ -510,39 +504,8 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     protected void onDestroy() {
 
         super.onDestroy();
-        if (broadcastReceiver != null)
-            unregisterReceiver(broadcastReceiver);
 
     }
-
-    // remove acentos de uma string
-    public static String stripAccents(String input) {
-        return input == null ? null :
-                Normalizer.normalize(input, Normalizer.Form.NFD)
-                        .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-    }
-
-    // verifica mudancas de estado de conectividade
-    private BroadcastReceiver networkStateReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            if (verificaSinalDados()) {
-
-                pegaChavesNv();
-                conectado.setText("");
-
-            } else {
-
-                String offline = getString(R.string.offline);
-                conectado.setText(offline);
-
-            }
-
-        }
-
-    };
 
     //verifica se tem sinal de dados
     public boolean verificaSinalDados() {
@@ -694,11 +657,11 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
             if (!retorno.isEmpty()) {
 
-                evento.setText(et.getText().toString());
+                txtEvento.setText(et.getText().toString());
                 SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putString("evento", retorno);
+                editor.putString("txtEvento", retorno);
                 editor.apply();
-                eventoCfg = sharedPref.getString("evento", "");
+                eventoCfg = sharedPref.getString("txtEvento", "");
 
             }
         });
@@ -785,14 +748,14 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     // proximo qr_code
     public void proximoQrcode(View view) {
 
-        barcodeValue.setText("");
-        barcodeValue.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-        foto.setVisibility(View.GONE);
+        txtBarcodeValue.setText("");
+        txtBarcodeValue.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+        imgPhoto.setVisibility(View.GONE);
         prox.setVisibility(View.GONE);
         cameraView.setVisibility(View.VISIBLE);
         contEvento.setVisibility(View.VISIBLE);
         contChave.setVisibility(View.VISIBLE);
-        evento.setVisibility(View.VISIBLE);
+        txtEvento.setVisibility(View.VISIBLE);
         contCpf.setVisibility(View.VISIBLE);
 
         try {
@@ -812,27 +775,27 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         if (verificaSinalDados()) {
 
-            fotop.setVisibility(View.VISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            evento.setVisibility(View.GONE);
+            txtEvento.setVisibility(View.GONE);
 
             closeMenuWithoutAnimation();
 
             ConstraintSet set = new ConstraintSet();
             set.clone(layout1);
-            set.clear(barcodeValue.getId(), ConstraintSet.TOP);
-            set.clear(barcodeValue.getId(), ConstraintSet.BOTTOM);
-            set.connect(barcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
-            set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
+            set.clear(txtBarcodeValue.getId(), ConstraintSet.TOP);
+            set.clear(txtBarcodeValue.getId(), ConstraintSet.BOTTOM);
+            set.connect(txtBarcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
+            set.connect(txtBarcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
             set.applyTo(layout1);
 
             RequestQueue queue = Volley.newRequestQueue(this);
             StringRequest postRequest = new StringRequest(Request.Method.GET, GlobalConstants.URL_CPF,
                     response -> {
 
-                        fotop.setVisibility(View.GONE);
+                        progressBar.setVisibility(View.GONE);
 
                         try {
 
@@ -842,15 +805,15 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                             if (retorno) {
 
-                                barcodeValue.setTextColor(Color.rgb(0, 255, 0));
-                                downloadImagem(obj.getString("foto"));
-                                barcodeValue.setText(GlobalConstants.DOC_VALIDO);
+                                txtBarcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                downloadImagem(obj.getString("imgPhoto"));
+                                txtBarcodeValue.setText(GlobalConstants.DOC_VALIDO);
 
                             } else {
 
-                                barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
                                 String msgerro = obj.getString("msg");
-                                barcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
+                                txtBarcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
                                 prox.setVisibility(View.VISIBLE);
 
                             }
@@ -859,18 +822,18 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                         } catch (Exception e) {
 
                             e.printStackTrace();
-                            fotop.setVisibility(View.GONE);
-                            barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                            barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
+                            progressBar.setVisibility(View.GONE);
+                            txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                            txtBarcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                             prox.setVisibility(View.VISIBLE);
 
                         }
                     },
                     error -> {
 
-                        fotop.setVisibility(View.GONE);
-                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                        barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
+                        progressBar.setVisibility(View.GONE);
+                        txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                        txtBarcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                         prox.setVisibility(View.VISIBLE);
 
                     }
@@ -899,24 +862,24 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
         if (verificaSinalDados()) {
 
-            fotop.setVisibility(View.VISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
 
             cameraSource.stop();
             cameraView.setVisibility(View.GONE);
-            evento.setVisibility(View.GONE);
+            txtEvento.setVisibility(View.GONE);
 
             closeMenuWithoutAnimation();
 
             ConstraintSet set = new ConstraintSet();
             set.clone(layout1);
-            set.clear(barcodeValue.getId(), ConstraintSet.TOP);
-            set.clear(barcodeValue.getId(), ConstraintSet.BOTTOM);
-            set.connect(barcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
-            set.connect(barcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
+            set.clear(txtBarcodeValue.getId(), ConstraintSet.TOP);
+            set.clear(txtBarcodeValue.getId(), ConstraintSet.BOTTOM);
+            set.connect(txtBarcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
+            set.connect(txtBarcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
             set.applyTo(layout1);
 
             String codigoAcesso = sharedPref.getString("codigo", "");
-            String evento = sharedPref.getString("evento", "");
+            String evento = sharedPref.getString("txtEvento", "");
 
             try {
                 evento = URLEncoder.encode(evento, "UTF-8");
@@ -928,9 +891,9 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
             StringRequest postRequest = new StringRequest(Request.Method.GET,
                     GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
-                            "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&evento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
+                            "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&txtEvento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
 
-                fotop.setVisibility(View.GONE);
+                progressBar.setVisibility(View.GONE);
 
                 try {
 
@@ -940,15 +903,15 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
                     if (retorno) {
 
-                        barcodeValue.setTextColor(Color.rgb(0, 255, 0));
-                        downloadImagem(obj.getString("foto"));
-                        barcodeValue.setText(GlobalConstants.DOC_VALIDO);
+                        txtBarcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                        downloadImagem(obj.getString("imgPhoto"));
+                        txtBarcodeValue.setText(GlobalConstants.DOC_VALIDO);
 
                     } else {
 
-                        barcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                        txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
                         String msgerro = obj.getString("msg");
-                        barcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
+                        txtBarcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
                         prox.setVisibility(View.VISIBLE);
 
                     }
@@ -956,18 +919,18 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                 } catch (Exception e) {
 
                     e.printStackTrace();
-                    fotop.setVisibility(View.GONE);
-                    barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                    barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
+                    progressBar.setVisibility(View.GONE);
+                    txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                    txtBarcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                     prox.setVisibility(View.VISIBLE);
 
                 }
 
             }, error -> {
 
-                fotop.setVisibility(View.GONE);
-                barcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                barcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
+                progressBar.setVisibility(View.GONE);
+                txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                txtBarcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                 prox.setVisibility(View.VISIBLE);
 
             }) {
@@ -988,81 +951,81 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     }
 
-    // envia captura  para o servidor
-    public void mandaCaptura() {
+    public void pushCapturaToServer() {
 
         try {
 
-            final Captura proxi = capturaDao.next();
-            if (!proxi.getId().equals("")) {
+            if (capturaDao.next() != null) {
+
+                Captura captura = capturaDao.next();
+                if (captura.getCodigoAcesso() == null || captura.getCodigoAcesso().isEmpty())
+                    captura.setCodigoAcesso(codigoCfg);
+
+                String jsonCaptura = jsonParser.toJson(captura);
 
                 RequestQueue queue = Volley.newRequestQueue(this);
-                HashMap<String, Object> params = new HashMap<>();
-                params.put("certificado", proxi.getCertificado());
-                params.put("status", proxi.getResultado().equals("0"));
-                params.put("data", proxi.getHorario());
-                params.put("evento", proxi.getEvento());
-                params.put("latitude", proxi.getLatitude());
-                params.put("longitude", proxi.getLongitude());
-                params.put("idDispositivo", proxi.getIdDispositivo());
-                params.put("codigoAcesso", codigoCfg);
-
-                JsonObjectRequest postRequest = new JsonObjectRequest(GlobalConstants.URL_CAPTURAS, new JSONObject(params),
+                JsonObjectRequest postRequest = new JsonObjectRequest(
+                        GlobalConstants.URL_CAPTURAS,
+                        new JSONObject(jsonCaptura),
                         response -> {
                             try {
 
-                                Boolean retorno = response.getBoolean("status");
-                                if (retorno) {
-
-                                    capturaDao.delete(proxi.getId());
-                                    mandaCaptura();
-
-                                } else {
-
-                                    String msgerro = response.getString("msg");
-                                    dialogoAviso(msgerro);
-
-                                }
+                                Boolean status = response.getBoolean("status");
+                                if (status) {
+                                    capturaDao.delete(captura.getId());
+                                    pushCapturaToServer();
+                                } else
+                                    dialogoAviso(response.getString("msg"));
 
                             } catch (Exception e) {
+
                                 Log.e(MainActivity.class.getName(), e.getMessage());
+
                             }
                         },
-                        error -> Log.e(MainActivity.class.getName(), error.getMessage()));
-
+                        error -> Log.e(TAG, error.getMessage()));
                 queue.add(postRequest);
 
             }
 
         } catch (Exception e) {
-            Log.e(MainActivity.class.getName(), e.getMessage());
+
+            Log.e(TAG, e.getMessage());
+
         }
 
     }
 
     // busca chaves publicas e CRLs no meiaentrada.org.br
-    public void pegaChavesNv() {
+    public void getCrlsAndChavesPublicas() {
 
         RequestQueue queue = Volley.newRequestQueue(this);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, GlobalConstants.URL_CHAVES,
+        StringRequest stringRequest = new StringRequest(
+                Request.Method.GET,
+                GlobalConstants.URL_CHAVES,
                 response -> {
 
                     try {
 
                         JSONObject jsonObject = new JSONObject(response);
-
                         JSONArray retorno = jsonObject.getJSONArray("retorno");
 
                         for (int i = 0; i < retorno.length(); i++) {
                             try {
 
                                 JSONObject oneObject = retorno.getJSONObject(i);
-                                String json_emissor = stripAccents(oneObject.getString("emissor")).replaceAll("\\p{Z}", "").replaceAll("-", "");
+
+                                String jsonEmissor = oneObject.getString("emissor");
+                                jsonEmissor = StringContentEncoder.stripAccents(jsonEmissor);
+                                jsonEmissor = jsonEmissor
+                                        .replaceAll("\\p{Z}", "")
+                                        .replaceAll("-", "");
+
                                 String json_chavepublica = oneObject.getString("chavePublica");
                                 String json_crl = oneObject.getString("crl");
                                 SharedPreferences.Editor editor = sharedPref.edit();
-                                editor.putString(json_emissor + "_chave", json_chavepublica);
-                                editor.putString(json_emissor + "_crl", json_crl);
+                                editor.putString(jsonEmissor + "_chave", json_chavepublica);
+                                editor.putString(jsonEmissor + "_crl", json_crl);
                                 editor.apply();
 
                             } catch (JSONException e) {
@@ -1070,48 +1033,47 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                             }
                         }
 
-                        if (capturaDao.count() > 0) {
-                            mandaCaptura();
-                        }
+                        if (capturaDao.count() > 0)
+                            pushCapturaToServer();
 
                     } catch (JSONException e) {
-                        e.printStackTrace();
+
+                        Log.e(TAG, e.getMessage());
                     }
 
                 },
-                error -> Log.e(MainActivity.class.getName(), error.getMessage()));
+                error -> Log.e(TAG, error.getMessage()));
 
         queue.add(stringRequest);
 
     }
 
-
-    // download de foto de estudante usando Picasso
+    // download de imgPhoto de estudante usando Picasso
     private void downloadImagem(String urlimagem) {
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int widths = displayMetrics.widthPixels;
 
-        fotop.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.VISIBLE);
         Picasso.with(getApplicationContext())
                 .load(urlimagem)
                 .memoryPolicy(MemoryPolicy.NO_CACHE)
                 .networkPolicy(NetworkPolicy.NO_CACHE)
                 .resize(widths, 0)
-                .into(foto, new Callback() {
+                .into(imgPhoto, new Callback() {
                     @Override
                     public void onSuccess() {
 
-                        foto.setVisibility(View.VISIBLE);
-                        fotop.setVisibility(View.GONE);
+                        imgPhoto.setVisibility(View.VISIBLE);
+                        progressBar.setVisibility(View.GONE);
                         prox.setVisibility(View.VISIBLE);
 
                         ConstraintSet set = new ConstraintSet();
                         set.clone(layout1);
-                        set.clear(barcodeValue.getId(), ConstraintSet.TOP);
-                        set.clear(barcodeValue.getId(), ConstraintSet.BOTTOM);
-                        set.connect(barcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
+                        set.clear(txtBarcodeValue.getId(), ConstraintSet.TOP);
+                        set.clear(txtBarcodeValue.getId(), ConstraintSet.BOTTOM);
+                        set.connect(txtBarcodeValue.getId(), ConstraintSet.TOP, layout1.getId(), ConstraintSet.TOP, 8);
                         set.applyTo(layout1);
 
                     }
@@ -1119,7 +1081,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
                     @Override
                     public void onError() {
 
-                        fotop.setVisibility(View.GONE);
+                        progressBar.setVisibility(View.GONE);
                         prox.setVisibility(View.VISIBLE);
 
                     }
@@ -1206,58 +1168,4 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
 
     }
 
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//
-//        if (requestCode == 100) {
-//            if (!(grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED))
-//                runtimePermissions();
-//        }
-//
-//    }
-//
-//    private boolean runtimePermissions() {
-//
-//        if (Build.VERSION.SDK_INT >= 23 &&
-//                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-//                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//
-//            requestPermissions(new String[]{
-//                    Manifest.permission.ACCESS_FINE_LOCATION,
-//                    Manifest.permission.ACCESS_COARSE_LOCATION
-//            }, 100);
-//            return true;
-//        }
-//        return false;
-//
-//    }
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

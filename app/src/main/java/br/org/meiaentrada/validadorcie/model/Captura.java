@@ -5,23 +5,24 @@ import br.org.meiaentrada.validadorcie.util.HashUtil;
 
 public class Captura {
 
-    private String id;
+    private int id;
     private String certificado;
-    private String resultado;
+    private String status;
     private String horario;
     private String evento;
     private String latitude;
     private String longitude;
     private String idDispositivo;
+    private String codigoAcesso;
 
     public Captura() {
     }
 
-    public Captura(String certificado, String resultado, String horario, String evento,
+    public Captura(String certificado, String status, String horario, String evento,
                    String latitude, String longitude, String idDispositivo) {
 
         this.certificado = certificado;
-        this.resultado = resultado;
+        this.status = status;
         this.horario = horario;
         this.evento = evento;
         this.latitude = latitude;
@@ -30,12 +31,12 @@ public class Captura {
 
     }
 
-    public Captura(String id, String certificado, String resultado, String horario, String evento,
+    public Captura(int id, String certificado, String status, String horario, String evento,
                    String latitude, String longitude, String idDispositivo) {
 
         this.id = id;
         this.certificado = certificado;
-        this.resultado = resultado;
+        this.status = status;
         this.horario = horario;
         this.evento = evento;
         this.latitude = latitude;
@@ -48,11 +49,11 @@ public class Captura {
         return certificado != null ? HashUtil.getMD5(certificado) : null;
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -64,12 +65,12 @@ public class Captura {
         this.certificado = certificado;
     }
 
-    public String getResultado() {
-        return resultado;
+    public String getStatus() {
+        return status;
     }
 
-    public void setResultado(String resultado) {
-        this.resultado = resultado;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getHorario() {
@@ -110,6 +111,14 @@ public class Captura {
 
     public void setIdDispositivo(String idDispositivo) {
         this.idDispositivo = idDispositivo;
+    }
+
+    public String getCodigoAcesso() {
+        return codigoAcesso;
+    }
+
+    public void setCodigoAcesso(String codigoAcesso) {
+        this.codigoAcesso = codigoAcesso;
     }
 
 }

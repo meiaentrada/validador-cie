@@ -1,7 +1,7 @@
 package br.org.meiaentrada.validadorcie.model;
 
 
-public interface CapturaDao extends GenericDao<Captura, String> {
+public interface CapturaDao extends GenericDao<Captura, Integer> {
 
     Captura next();
 

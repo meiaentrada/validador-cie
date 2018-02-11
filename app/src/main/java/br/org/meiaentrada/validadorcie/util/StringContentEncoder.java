@@ -1,6 +1,7 @@
 package br.org.meiaentrada.validadorcie.util;
 
 import java.io.UnsupportedEncodingException;
+import java.text.Normalizer;
 
 
 public class StringContentEncoder {
@@ -19,6 +20,14 @@ public class StringContentEncoder {
         }
 
         return str;
+
+    }
+
+    public static String stripAccents(String input) {
+
+        return input == null ? null :
+                Normalizer.normalize(input, Normalizer.Form.NFD)
+                        .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
 
     }
 
