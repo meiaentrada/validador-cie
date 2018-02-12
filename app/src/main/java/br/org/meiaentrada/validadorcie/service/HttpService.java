@@ -1,6 +1,5 @@
 package br.org.meiaentrada.validadorcie.service;
 
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -17,7 +16,7 @@ public class HttpService {
 
         try {
 
-            String endpoint = GlobalConstants.URL_VALIDATE_OPERADOR + "/" + codigoAcesso;
+            String endpoint = GlobalConstants.URL_VALIDATE_OPERADOR + codigoAcesso;
             JsonObjectRequest request = new JsonObjectRequest(
                     Request.Method.GET, endpoint, null, response -> {
 

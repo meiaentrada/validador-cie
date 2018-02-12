@@ -5,6 +5,7 @@ import android.text.TextWatcher;
 import android.widget.EditText;
 
 import java.util.Calendar;
+import java.util.Locale;
 
 
 public class DateInputMask implements TextWatcher {

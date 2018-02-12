@@ -64,6 +64,8 @@ public class SQLiteCapturaDao implements CapturaDao {
         SQLiteDatabase db = databaseHandler.getWritableDatabase();
         int lastInsertedId = (int) db.insert(DatabaseManager.TABLE_CAPTURAS, null, values);
         db.close();
+
+        captura.setId(lastInsertedId);
         return findById(lastInsertedId);
 
     }
@@ -145,7 +147,7 @@ public class SQLiteCapturaDao implements CapturaDao {
     }
 
     @Override
-    public Captura update(Captura entity) {
+    public Captura update(Captura captura) {
         return null;
     }
 

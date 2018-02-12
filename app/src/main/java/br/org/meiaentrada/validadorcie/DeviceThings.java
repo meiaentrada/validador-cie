@@ -17,17 +17,17 @@ public class DeviceThings {
     public DeviceThings(Context context) {
 
         sharedPref = context.getSharedPreferences(
-                GlobalConstants.PREFERENCE_FILE_KEY, Context.MODE_PRIVATE);
+                GlobalConstants.SHARED_PREF_FILE, Context.MODE_PRIVATE);
 
-        if (telephonyManager == null) {
-
-            telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString("deviceId", telephonyManager.getDeviceId());
-            editor.apply();
-
-        }
+//        if (telephonyManager == null) {
+//
+//            telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+//
+//            SharedPreferences.Editor editor = sharedPref.edit();
+//            editor.putString("deviceId", telephonyManager.getDeviceId());
+//            editor.apply();
+//
+//        }
 
     }
 
