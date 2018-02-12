@@ -728,7 +728,7 @@ public class MainActivity
                     String[] dateArray = dataNascimento.split("/");
                     dataNascimento = String.format("%s-%s-%s", dateArray[2], dateArray[1], dateArray[0]);
 
-                    validaCodigoUsoDataNascimento(codigoUso, dataNascimento);
+                    validarCodigoUsoDataNascimento(codigoUso, dataNascimento);
 
                 }).setNegativeButton(R.string.dialog_cancel, (d, id) -> {
                 }
@@ -861,7 +861,7 @@ public class MainActivity
 
     }
 
-    public void validaCodigoUsoDataNascimento(String codigoUso, String dataNascimento) {
+    public void validarCodigoUsoDataNascimento(String codigoUso, String dataNascimento) {
 
         if (verificarSinalDados()) {
 
@@ -881,75 +881,74 @@ public class MainActivity
             set.connect(txtBarcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
             set.applyTo(layout1);
 
-            String codigoAcesso = sharedPref.getString(GlobalConstants.SHARED_PREF_CODIGO_ACESSO, GlobalConstants.SHARED_PREF_DEFAULT);
-            String evento = sharedPref.getString(GlobalConstants.SHARED_PREF_EVENTO, GlobalConstants.SHARED_PREF_DEFAULT);
-
-            try {
-                evento = URLEncoder.encode(evento, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
+            String codigoAcesso = sharedPreferencesService.getCodigoAcesso();
+            String evento =
+                    StringContentEncoder.makeUtf8QueryString(sharedPreferencesService.getEvento());
 
             RequestQueue queue = Volley.newRequestQueue(this);
 
             StringRequest postRequest = new StringRequest(Request.Method.GET,
-                    GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO + String.format(
-                            "?codigoAcesso=%s&dataNascimento=%s&codigoUso=%s&txtEvento=%s", codigoAcesso, dataNascimento, codigoUso, evento), response -> {
+                    String.format(GlobalConstants.URL_VALIDATE_CODIGO_USO_AND_DT_NASCIMENTO,
+                            codigoAcesso, dataNascimento, codigoUso, evento),
 
-                progressBar.setVisibility(View.GONE);
+                    response -> {
 
-                try {
+                        progressBar.setVisibility(View.GONE);
 
-                    JSONObject obj = new JSONObject(response);
-                    Boolean retorno = obj.getBoolean("status");
+                        try {
 
-                    if (retorno) {
+                            JSONObject obj = new JSONObject(response);
 
-                        txtBarcodeValue.setTextColor(Color.rgb(0, 255, 0));
-                        downloadImagem(obj.getString("imgPhoto"));
-                        txtBarcodeValue.setText(GlobalConstants.DOC_VALIDO);
+                            Boolean status = obj.getBoolean("status");
+                            if (status) {
 
-                    } else {
+                                txtBarcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                downloadImagem(obj.getString("foto"));
+                                txtBarcodeValue.setText(GlobalConstants.DOC_VALIDO);
 
+                            } else {
+
+                                txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                                String msgerro = obj.getString("msg");
+                                txtBarcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
+                                prox.setVisibility(View.VISIBLE);
+
+                            }
+
+                        } catch (Exception e) {
+
+                            e.printStackTrace();
+                            progressBar.setVisibility(View.GONE);
+                            txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
+                            txtBarcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
+                            prox.setVisibility(View.VISIBLE);
+
+                        }
+
+                    },
+                    error -> {
+
+                        progressBar.setVisibility(View.GONE);
                         txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                        String msgerro = obj.getString("msg");
-                        txtBarcodeValue.setText("\n".concat(StringContentEncoder.makeUtf8(msgerro)).concat("\n"));
+                        txtBarcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
                         prox.setVisibility(View.VISIBLE);
 
                     }
-
-                } catch (Exception e) {
-
-                    e.printStackTrace();
-                    progressBar.setVisibility(View.GONE);
-                    txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                    txtBarcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
-                    prox.setVisibility(View.VISIBLE);
-
-                }
-
-            }, error -> {
-
-                progressBar.setVisibility(View.GONE);
-                txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
-                txtBarcodeValue.setText("\n" + R.string.erro_conectividade + "\n");
-                prox.setVisibility(View.VISIBLE);
-
-            }) {
+            ) {
 
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
-                    Map<String, String> params = new HashMap<>();
-                    return params;
+
+                    return new HashMap<>();
+
                 }
 
             };
 
             queue.add(postRequest);
 
-        } else {
+        } else
             openDialogAviso(getString(R.string.sem_conectividade));
-        }
 
     }
 

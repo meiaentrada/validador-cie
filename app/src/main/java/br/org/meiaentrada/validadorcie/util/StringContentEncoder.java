@@ -1,6 +1,7 @@
 package br.org.meiaentrada.validadorcie.util;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.Normalizer;
 
 
@@ -18,7 +19,21 @@ public class StringContentEncoder {
             e.printStackTrace();
 
         }
+        return str;
 
+    }
+
+    public static String makeUtf8QueryString(String str) {
+
+        try {
+
+            return  URLEncoder.encode(str, "UTF-8");
+
+        } catch (UnsupportedEncodingException e) {
+
+            e.printStackTrace();
+
+        }
         return str;
 
     }
