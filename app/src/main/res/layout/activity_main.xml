@@ -101,7 +101,7 @@
             android:id="@+id/codigo_uso_dt_nascimento"
             android:layout_width="@dimen/fab_item_simples"
             android:layout_height="@dimen/fab_item_simples"
-            android:onClick="dialogoValidacaoCasoUsoDataNascimento"
+            android:onClick="openDialogValidacaoCasoUsoDataNascimento"
             android:scaleType="center"
             android:src="@drawable/ic_action_name"
             app:fabSize="normal"

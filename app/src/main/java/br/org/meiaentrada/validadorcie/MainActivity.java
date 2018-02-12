@@ -705,7 +705,7 @@ public class MainActivity
 
     }
 
-    public void dialogoValidacaoCasoUsoDataNascimento(View view) {
+    public void openDialogValidacaoCasoUsoDataNascimento(View view) {
 
         if (alerta != null)
             alerta.dismiss();
@@ -997,7 +997,6 @@ public class MainActivity
 
     }
 
-    // busca chaves publicas e CRLs no meiaentrada.org.br
     public void getCrlsAndChavesPublicas() {
 
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -1053,7 +1052,6 @@ public class MainActivity
 
     }
 
-    // download de imgPhoto de estudante usando Picasso
     private void downloadImagem(String url) {
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
