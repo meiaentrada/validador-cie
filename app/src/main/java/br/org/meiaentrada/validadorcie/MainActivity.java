@@ -304,10 +304,9 @@ public class MainActivity
                         set.connect(txtBarcodeValue.getId(), ConstraintSet.BOTTOM, layout1.getId(), ConstraintSet.BOTTOM, 8);
                         set.applyTo(layout1);
 
-                        mEvento = sharedPref.getString(GlobalConstants.SHARED_PREF_EVENTO, GlobalConstants.SHARED_PREF_DEFAULT);
-                        if (mEvento.isEmpty()) {
+                        mEvento = sharedPreferencesService.getEvento();
+                        if (mEvento.isEmpty())
                             mEvento = getString(R.string.evento_indefinido);
-                        }
 
                         BarcodeType barcodeType = BarcodeService.getBarcodeType(document);
                         if (barcodeType == BarcodeType.CDNE_URL) {
@@ -317,17 +316,9 @@ public class MainActivity
 
                             String codigoUso = fields[0];
                             String dataNascimento = fields[1];
-                            String codigoAcesso = sharedPref.getString(GlobalConstants.SHARED_PREF_CODIGO_ACESSO, GlobalConstants.SHARED_PREF_DEFAULT);
-                            String evento = sharedPref.getString(GlobalConstants.SHARED_PREF_EVENTO, GlobalConstants.SHARED_PREF_DEFAULT);
-
-                            try {
-
-                                evento = URLEncoder.encode(evento, "UTF-8");
-
-                            } catch (UnsupportedEncodingException e) {
-
-                                Log.e(TAG, e.getMessage());
-                            }
+                            String codigoAcesso = sharedPreferencesService.getCodigoAcesso();
+                            String evento = sharedPreferencesService.getEvento();
+                            evento = StringContentEncoder.makeUtf8QueryString(evento);
 
                             RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
                             StringRequest stringRequest = new StringRequest(Request.Method.GET,
@@ -348,7 +339,7 @@ public class MainActivity
                                 } else {
 
                                     txtBarcodeValue.setTextColor(Color.rgb(0, 255, 0));
-                                    txtBarcodeValue.setText(R.string.documento_invalido);
+                                    txtBarcodeValue.setText(R.string.documento_valido);
 
                                     if (verificarSinalDados())
                                         downloadImagem(validacaoDTO.getFoto());
@@ -356,7 +347,6 @@ public class MainActivity
                                         prox.setVisibility(View.VISIBLE);
 
                                 }
-                                closeMenuWithoutAnimation();
 
                                 Captura captura = new Captura();
                                 captura.setStatus(String.valueOf(validacaoDTO.getStatus()));
@@ -369,6 +359,8 @@ public class MainActivity
 
                                 capturaDao.save(captura);
 
+                                closeMenuWithoutAnimation();
+
                             }, error -> Log.e(TAG, error.getMessage()));
 
                             queue.add(stringRequest);
@@ -376,7 +368,6 @@ public class MainActivity
                         } else {
 
                             RetornoValidacao emissor = certificadoService.pegaEmissor(document);
-
                             if (emissor.getErro()) {
 
                                 txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
@@ -400,22 +391,21 @@ public class MainActivity
 
                             } else {
 
-                                String emissor_chave = emissor.getResultado().concat("_chave");
-                                String emissor_crl = emissor.getResultado().concat("_crl");
+                                String emissorChave = emissor.getResultado().concat("_chave");
+                                String emissorCrl = emissor.getResultado().concat("_crl");
 
-                                chavePublicaOrigem = sharedPref.getString(emissor_chave, GlobalConstants.SHARED_PREF_DEFAULT);
-                                crlOrigem = sharedPref.getString(emissor_crl, GlobalConstants.SHARED_PREF_DEFAULT);
+                                chavePublicaOrigem = sharedPref.getString(emissorChave, GlobalConstants.SHARED_PREF_DEFAULT);
+                                crlOrigem = sharedPref.getString(emissorCrl, GlobalConstants.SHARED_PREF_DEFAULT);
 
-                                RetornoValidacao resultado_valida = certificadoService.validaCertificado(document, chavePublicaOrigem, crlOrigem);
+                                RetornoValidacao retornoValidacao =
+                                        certificadoService.validaCertificado(document, chavePublicaOrigem, crlOrigem);
 
-                                if (resultado_valida.getErro()) {
+                                if (retornoValidacao.getErro()) {
 
                                     txtBarcodeValue.setTextColor(Color.rgb(255, 0, 0));
                                     prox.setVisibility(View.VISIBLE);
 
                                 } else {
-
-                                    txtBarcodeValue.setTextColor(Color.rgb(0, 255, 0));
 
                                     if (verificarSinalDados()) {
 
@@ -424,23 +414,24 @@ public class MainActivity
 
                                     } else
                                         prox.setVisibility(View.VISIBLE);
+                                    txtBarcodeValue.setTextColor(Color.rgb(0, 255, 0));
+                                    txtBarcodeValue.setText(retornoValidacao.getResultado());
+
+                                    Long tsLong = System.currentTimeMillis() / 1000;
+                                    String ts = tsLong.toString();
+
+                                    Captura captura = new Captura(document,
+                                            String.valueOf(retornoValidacao.getErro()),
+                                            ts,
+                                            mEvento,
+                                            String.valueOf(deviceLocation.getLatitude()),
+                                            String.valueOf(deviceLocation.getLongitude()),
+                                            mDeviceId
+                                    );
+                                    captura.setCodigoAcesso(mCodigoAcesso);
+                                    capturaDao.save(captura);
 
                                 }
-
-                                Long tsLong = System.currentTimeMillis() / 1000;
-                                String ts = tsLong.toString();
-
-                                Captura captura = new Captura(document,
-                                        String.valueOf(resultado_valida.getErro()),
-                                        ts,
-                                        mEvento,
-                                        String.valueOf(deviceLocation.getLatitude()),
-                                        String.valueOf(deviceLocation.getLongitude()),
-                                        mDeviceId
-                                );
-                                captura.setCodigoAcesso(mCodigoAcesso);
-                                capturaDao.save(captura);
-                                txtBarcodeValue.setText(resultado_valida.getResultado());
 
                             }
 
