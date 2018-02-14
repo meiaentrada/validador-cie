@@ -9,6 +9,8 @@ Este APP foi criado para servir de referência para estabelecimentos interessado
 
 Se você já se cadastrou como operador do seu estabelecimento, você pode instalar o aplicativo de validação para plataforma Android. O arquivo .apk para instalação pode ser acessado [aqui](https://github.com/meiaentrada/validador-cie/releases).
 
+**IMPORTANTE:**
+Para instalar o apk em um celular Android é necessário antes habilitar no aparelho a instalação de aplicativos de outras fontes além da Play Store. Esta permissão é dada no menu "Tela de Bloqueio e Segurança" dentro das Configurações do aparelho.
 
 ## Ambiente de compilação utilizado
 
